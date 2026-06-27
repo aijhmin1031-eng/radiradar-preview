@@ -225,7 +225,11 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .card .meta .src{margin-left:auto; font-size:10px; padding:1px 6px; border-radius:5px; border:1px solid var(--line2); color:var(--muted)}
 .card .meta .src-msit{color:var(--radar); border-color:var(--radar-d)}
 .card .meta .src-ntis{color:var(--beacon); border-color:var(--beacon-d)}
-.card .go{color:var(--dim); font-size:20px; transition:.15s} .card:hover .go{color:var(--radar); transform:translateX(2px)}
+.card .go{color:var(--dim); font-size:20px; transition:.15s} .card:hover .go{color:var(--radar)}
+.card-actions{display:flex; align-items:center; gap:3px}
+.qbtn{background:transparent; border:0; border-radius:8px; width:32px; height:32px; cursor:pointer; font-size:18px; color:var(--dim); transition:.15s; line-height:1}
+.qbtn:hover{background:var(--raise); color:var(--beacon)}
+.qbtn.star.on{color:var(--beacon)}
 .empty{text-align:center; color:var(--dim); padding:60px 20px; font-size:13px}
 .empty .ri{opacity:.5; margin-bottom:14px}
 
@@ -633,7 +637,10 @@ function cardHTML(a,i){
       <div class="meta"><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>${a.track_status?`<span class="trk">${esc(a.track_status)}</span>`:''}${a.note?'<span class="has-note" title="메모 있음">📝</span>':''}${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
       ${kws?`<div class="kw">${kws}</div>`:''}
     </div>
-    <div class="go">›</div>
+    <div class="card-actions">
+      <button class="qbtn star${a.track_status==='관심'?' on':''}" data-act="star" aria-label="관심" title="${a.track_status==='관심'?'관심 해제':'관심 표시'}">${a.track_status==='관심'?'★':'☆'}</button>
+      <span class="go">›</span>
+    </div>
   </div>`;
 }
 function renderList(el,items,emptyKind){
@@ -644,7 +651,19 @@ function renderList(el,items,emptyKind){
     el.innerHTML=`<div class="empty"><svg class="ri" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><div>${msg}</div></div>`;return;
   }
   el.innerHTML=items.map(cardHTML).join('');
-  el.querySelectorAll('.card').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
+  el.querySelectorAll('.card').forEach(c=>{
+    c.onclick=()=>openDetail(c.dataset.id);
+    const star=c.querySelector('[data-act="star"]');
+    if(star) star.onclick=async(e)=>{
+      e.stopPropagation();
+      const id=c.dataset.id, on=star.classList.contains('on'), st=on?'':'관심';
+      const r=await api('set_track',id,st);
+      if(r&&r.ok){ star.classList.toggle('on',!on); star.textContent=on?'☆':'★';
+        star.title=on?'관심 표시':'관심 해제';
+        updateLocalField(id,'track_status',st||null); toast(on?'관심 해제':'관심에 추가했어요 ⭐'); loadTracked(); }
+      else toast('변경 실패','err');
+    };
+  });
 }
 function renderDashboard(){
   const o=S.overview; if(!o)return; const s=o.stats;
