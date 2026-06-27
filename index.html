@@ -262,6 +262,24 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .an-basis{font-size:12px; color:var(--muted); line-height:1.55; border-top:1px dashed var(--line); padding-top:10px}
 .an-basis b{color:var(--radar); font-weight:700}
 @media (max-width:600px){.an-grid{grid-template-columns:1fr}}
+/* 공고문 추출 상세 + 체크리스트 */
+.rich-loading,.rich-none{font-size:12.5px; color:var(--muted); background:var(--panel2); border:1px dashed var(--line); border-radius:9px; padding:11px 14px; margin-bottom:16px}
+.rich{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:16px}
+.rich-h{font-size:12px; font-weight:800; color:var(--ink); margin-bottom:9px}
+.rich-src{color:var(--dim); font-weight:600; font-size:10.5px}
+.rf{display:flex; gap:10px; padding:6px 0; border-top:1px dashed var(--line); font-size:13px}
+.rf-k{flex:none; width:82px; color:var(--muted); font-weight:600; font-size:12px}
+.rf-v{color:var(--ink); font-weight:600; word-break:keep-all}
+.rf-sum{padding-bottom:8px; font-size:13px; line-height:1.55}
+.rf-sum .rf-k{display:block; margin-bottom:4px; width:auto}
+.checklist{margin-top:12px; border-top:1px solid var(--line); padding-top:11px}
+.ck-h{font-size:12.5px; font-weight:800; color:var(--radar); margin-bottom:9px}
+.checklist ul{list-style:none; display:flex; flex-direction:column; gap:7px}
+.checklist li{display:flex; gap:8px; font-size:12.5px; cursor:pointer; user-select:none}
+.ck-box{color:var(--radar); font-weight:800; flex:none}
+.checklist li.done .ck-box{font-size:0} .checklist li.done .ck-box::before{content:"☑"; font-size:13px}
+.checklist li.done .ck-t b{text-decoration:line-through; color:var(--dim)}
+.ck-t b{color:var(--ink); font-weight:700} .ck-t span{color:var(--muted)}
 .files{display:flex; flex-direction:column; gap:7px; margin:14px 0}
 .file{display:flex; align-items:center; gap:10px; background:var(--raise); border:1px solid var(--line); border-radius:9px; padding:10px 13px; font-size:12.5px; cursor:pointer; transition:.15s}
 .file:hover{border-color:var(--radar)} .file .fi{color:var(--beacon)}
@@ -488,7 +506,8 @@ const MOCK = {
   run_collect: ()=>new Promise(r=>setTimeout(()=>r({ok:true,data:{fetched:4020,new:3,updated:4017,relevant:125,failed_pages:0,unavailable_pages:15,incomplete:false,expected_total:4169,db_total:4020,stats:{total:4023,relevant:126,new:3,latest_press_dt:"2026-06-27"}}}),1500)),
   rescore: ()=>({ok:true,data:{rescored:4020,stats:{total:4020,relevant:174,new:0,latest_press_dt:"2026-06-26"}}}),
   get_settings: ()=>({ok:true,data:{strong:["방사선","방사능","방사성","원자력","동위원소","핵의학","방사광","양성자","중성자","중입자","가속기","비파괴검사","선량","피폭","차폐","RI"],medium:["원전","원자로","핵연료","방사선안전","비파괴","의료영상"],threshold:3}}),
-  set_state:()=>({ok:true}), open_url:(u)=>{window.open(u,"_blank");return{ok:true}}
+  set_state:()=>({ok:true}), open_url:(u)=>{window.open(u,"_blank");return{ok:true}},
+  enrich_detail:(id)=>({ok:true,data:MOCKDETAIL[id]||{ok:false,reason:"no_files"}})
 };
 /* 미리보기용 샘플 — 실제 공고·진짜 링크(원문 열기 동작). 본 앱은 API 실데이터 사용. */
 const _MV="https://www.msit.go.kr/bbs/view.do?sCode=user&mId=311&mPid=121&bbsSeqNo=100&nttSeqNo=";
@@ -502,6 +521,12 @@ const MOCKLIST=[
  {id:"n3",subject:"2022년도 방사선 이용 희귀난치질환 대응 핵심기술개발사업(치료용 방사성동위원소 이용 의약품 제조) 신규과제 공고",press_dt:"2022-05-09",dept_name:"",relevance:6,matched:["방사성동위원소","방사선"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1087634",files:[]}
 ];
 const MOCKEXTRA=[{id:"x1",subject:"2026년 ICT 중소기업 정보보호 지원 사업 수요기업 모집 공고",press_dt:"2026-06-26",dept_name:"정보보호산업과",relevance:0,matched:[],state:"new",source:"msit",view_url:_MV+"3186700",files:[]}];
+/* 미리보기용 — 공고문 자동추출 샘플(실제 앱은 첨부 hwpx/odt/pdf를 라이브 파싱). NTIS(n*)는 첨부 없음. */
+const MOCKDETAIL={
+ m1:{ok:true,source_ext:"hwpx",budget:"총 30억원 내외 · 과제당 5억원(2년)",target:"3개 내외",apply_period:"2026.3.18.(수) ~ 4.10.(금)",purpose:"산업 안전·신뢰성 확보를 위한 비파괴검사(RT·CT) 핵심기술 고도화 및 현장적용 기술 개발",qualification:"「기초연구진흥 및 기술개발지원에 관한 법률」 제14조에서 정하는 기관 및 단체"},
+ m2:{ok:true,source_ext:"hwpx",budget:"’25년~’29년 / 총 165억원 내외(’25년 10억원) · 과제당 8.5억원(4년)",target:"10개 내외",apply_period:"2025.2.17.(월) ~ 3.5.(수)",purpose:"방사선 이용기술이 제한적으로 적용되던 고부가 미래기술 분야(혁신 신소재·의료·우주·환경·반도체)에서 게임체인저가 될 방사선혁신 기반기술 개발",qualification:"「국가연구개발혁신법」 제2조제3호 및 동법 시행령 제2조에서 정하는 기관 및 단체"},
+ m3:{ok:true,source_ext:"hwpx",budget:"’25년~’29년 / 총 190억원 내외(’25년 30억원)",target:"1개 내외",apply_period:"2025.2.17.(월) ~ 3.5.(수)",purpose:"국가 주요 산업 경쟁력 강화를 위한 방사선(전자선·양성자/중성자·감마선) 대체불가 원천기술 개발",qualification:"「국가연구개발혁신법」 제2조제3호에서 정하는 기관 및 단체"}
+};
 
 let BRIDGE=null;
 function api(method,...args){
@@ -623,6 +648,39 @@ function ageText(pd){
   if(days<=31) return days+'일 전 게시';
   return '약 '+Math.floor(days/30)+'개월 전 게시';
 }
+function checklistHTML(a,d){
+  const rnd=/R&D|기술개발/.test(bizType(a.subject));
+  const items=[
+    ['신청자격 충족', d.qualification?'기관 유형·참여제한 확인':'공고문에서 확인'],
+    ['신청기간 내 접수', d.apply_period?('마감 '+d.apply_period):'접수기간 확인'],
+  ];
+  if(rnd){ items.push(['연구개발계획서 작성','공고 별지 양식'],['전산 등록','범부처통합연구지원시스템(IRIS)'],['사업비 산정','인건비·연구활동비·간접비']); }
+  else { items.push(['신청서·사업계획서 작성','공고 별지 양식'],['구비서류 준비','사업자등록증 등']); }
+  items.push(['제출서류 일체','공고문 제출서류 목록 대조']);
+  const li=items.map(it=>`<li><span class="ck-box">□</span><span class="ck-t"><b>${esc(it[0])}</b> <span>${esc(it[1])}</span></span></li>`).join('');
+  return `<div class="checklist"><div class="ck-h">✅ 신청 준비 체크리스트</div><ul>${li}</ul></div>`;
+}
+function renderRich(d,a){
+  const el=$('#detail-rich'); if(!el) return;
+  if(!d||!d.ok){
+    el.className='rich-none';
+    el.innerHTML=(d&&d.reason==='no_files')
+      ? '📄 첨부 공고문이 없어 자동추출 불가 — 아래 ‘공고 원문 열기’에서 확인하세요.'
+      : '📄 공고문에서 상세를 추출하지 못했습니다 — ‘공고 원문 열기’에서 확인하세요.';
+    return;
+  }
+  el.className='rich';
+  const rows=[];
+  if(d.budget) rows.push(['💰 사업규모',d.budget]);
+  if(d.target) rows.push(['🎯 선정규모',d.target]);
+  if(d.apply_period) rows.push(['📅 신청기간',d.apply_period]);
+  if(d.qualification) rows.push(['🏢 신청자격',d.qualification]);
+  const fields=rows.map(r=>`<div class="rf"><span class="rf-k">${r[0]}</span><span class="rf-v">${esc(r[1])}</span></div>`).join('');
+  const sum=d.purpose?`<div class="rf-sum"><span class="rf-k">📌 주요내용</span><div>${esc(d.purpose)}</div></div>`:'';
+  el.innerHTML=`<div class="rich-h">📄 공고문 상세 <span class="rich-src">(${esc(d.source_ext||'첨부')} 자동추출)</span></div>${sum}${fields}${checklistHTML(a,d)}`;
+  el.querySelectorAll('.checklist li').forEach(li=>li.onclick=()=>li.classList.toggle('done'));
+}
+let _detailId=null;
 async function openDetail(id){
   let a=[...S.rel,...S.all,...(S.overview?S.overview.recent:[])].find(x=>x.id===id);
   if(!a){const r=await api('get_detail',id); if(r&&r.ok)a=r.data;}
@@ -645,6 +703,7 @@ async function openDetail(id){
       </div>
       <div class="an-basis">관련 근거 : ${(a.matched||[]).length?(a.matched||[]).map(k=>`<b>${esc(k)}</b>`).join(', '):'—'} <span style="color:var(--dim)">— 방사선 산업 분류체계 일치</span></div>
     </div>
+    <div id="detail-rich" class="rich-loading">📄 공고문에서 사업규모·신청기간·자격을 불러오는 중…</div>
     <div class="detail-meta">
       <div class="k">게시일</div><div class="v">${esc(a.press_dt||'—')}</div>
       <div class="k">담당부서</div><div class="v">${esc(a.dept_name||'—')}</div>
@@ -657,6 +716,8 @@ async function openDetail(id){
       <button class="btn" data-state="hidden">숨김</button>
     </div>`;
   $('#modal').classList.add('on');
+  _detailId=id;
+  api('enrich_detail',id).then(r=>{ if(_detailId===id && $('#modal').classList.contains('on')) renderRich((r&&r.ok)?r.data:null,a); });
   $('#sheet').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeModal);
   const openBtn=$('#sheet').querySelector('[data-open]');
   openBtn.onclick=async e=>{const r=await api('open_url',e.currentTarget.dataset.open); if(r&&r.ok&&r.data===false) toast('이 링크는 열 수 없습니다','warn');};
