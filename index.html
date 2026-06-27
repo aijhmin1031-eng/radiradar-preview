@@ -184,6 +184,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .fgroup{display:flex; align-items:center; gap:7px}
 .sortsel{font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:8px 10px; cursor:pointer; outline:none}
 .sortsel:focus{border-color:var(--radar-d)}
+.export-bar{margin-left:auto; display:flex; gap:8px}
 /* 계층별 색: 공급제조=호박, 이용응용=틸, 기반안전=보라 */
 #tier-rel button[data-v="mfg"].on{color:var(--tier-mfg); border-color:var(--beacon-d); background:rgba(255,180,84,.10)}
 #tier-rel button[data-v="use"].on{color:var(--tier-use); border-color:var(--radar-d); background:rgba(201,100,66,.10)}
@@ -227,9 +228,9 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .card .meta .src-ntis{color:var(--beacon); border-color:var(--beacon-d)}
 .card .go{color:var(--dim); font-size:20px; transition:.15s} .card:hover .go{color:var(--radar)}
 .card-actions{display:flex; align-items:center; gap:3px}
-.qbtn{background:transparent; border:0; border-radius:8px; width:32px; height:32px; cursor:pointer; font-size:18px; color:var(--dim); transition:.15s; line-height:1}
-.qbtn:hover{background:var(--raise); color:var(--beacon)}
-.qbtn.star.on{color:var(--beacon)}
+.qbtn{background:transparent; border:0; border-radius:8px; width:34px; height:34px; cursor:pointer; font-size:20px; color:#b39b73; transition:.15s; line-height:1}
+.qbtn:hover{background:rgba(190,138,60,.12); color:var(--beacon)}
+.qbtn.star.on{color:var(--beacon)}   /* 채워진 별 = 진한 금색 */
 .empty{text-align:center; color:var(--dim); padding:60px 20px; font-size:13px}
 .empty .ri{opacity:.5; margin-bottom:14px}
 
@@ -242,6 +243,12 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .kwbox span{font-size:12px; padding:5px 11px; border-radius:8px; background:var(--raise); border:1px solid var(--line2); color:var(--ink)}
 .kwbox span.s{color:var(--radar); border-color:var(--radar-d); background:rgba(201,100,66,.07)}
 .kwbox span.m{color:var(--beacon); border-color:var(--beacon-d); background:rgba(255,180,84,.06)}
+.kwbox span.user{border-style:dashed; padding-right:5px}
+.kwbox span .rm{cursor:pointer; margin-left:5px; color:var(--danger); font-weight:800; font-style:normal}
+.kw-add{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
+.kw-add input{flex:1; min-width:150px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:13px; color:var(--ink); outline:none}
+.kw-add input:focus{border-color:var(--radar-d)}
+.kw-add select{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; color:var(--muted); cursor:pointer}
 
 /* ===== 상세 모달 ===== */
 .modal{position:fixed; inset:0; z-index:40; display:none; align-items:center; justify-content:center; padding:30px}
@@ -339,6 +346,8 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
   .radar-card{display:none}                 /* 레이더 장식 → 모바일 숨김(콘텐츠 우선) */
   .toolbar{flex-direction:column; align-items:stretch; gap:9px}
   .fgroup{flex-wrap:wrap; gap:6px}
+  .export-bar{margin-left:0; width:100%} .export-bar .btn{flex:1; font-size:11px; padding:9px 6px}
+  .sortsel{width:100%}
   .chiplbl{min-width:28px}
   .signals{gap:7px; margin-top:14px; padding-top:12px} .signals .sig{font-size:10.5px; padding:5px 9px}
   .modal{padding:14px} .modal .sheet{padding:22px 18px}
@@ -492,7 +501,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
         <div class="chiptog" id="trk-filter" role="group" aria-label="상태 필터">
           <button class="on" data-v="">전체</button><button data-v="관심">관심</button><button data-v="검토중">검토중</button><button data-v="신청예정">신청예정</button><button data-v="완료">완료</button>
         </div>
-        <div style="margin-left:auto; display:flex; gap:8px">
+        <div class="export-bar">
           <button class="btn" id="btn-export-trk">⬇ 보관함 내보내기(CSV)</button>
           <button class="btn" id="btn-export-rel">⬇ 관련공고 전체(CSV)</button>
         </div>
@@ -511,6 +520,12 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
           <div class="kwbox" id="kw-strong"></div>
           <div style="font-size:11px;color:var(--muted);margin:14px 0 7px;font-family:var(--mono)">MEDIUM</div>
           <div class="kwbox" id="kw-medium"></div>
+          <div class="kw-add">
+            <input id="kw-input" placeholder="키워드 추가 (예: 방사성의약품)" maxlength="30">
+            <select id="kw-weight" aria-label="가중치"><option value="strong">강한 신호(3)</option><option value="medium">맥락(1)</option></select>
+            <button class="btn primary" id="kw-add-btn">＋ 추가</button>
+          </div>
+          <p class="desc" style="margin-top:8px">기본 키워드는 그대로 두고, 내가 추가한 키워드(<span style="color:var(--danger)">×</span>로 삭제)가 함께 적용됩니다. 추가 후 <b>관련도 재계산</b>을 누르면 즉시 반영돼요.</p>
         </div>
         <div class="panel">
           <h4>수집 / 데이터</h4>
@@ -547,12 +562,17 @@ function _csvDL(rows,scope){
   const b=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='방사선레이더_'+scope+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500);
 }
+const _KWDEF={strong:["방사성동위원소","방사성의약품","방사선","방사능","방사성","방사광","비파괴검사","방사선투과검사","방사선치료","핵의학","테라노스틱스","방사선멸균","전자선조사","방사선차폐","검출기","선량계","방사선안전관리"],medium:["원자력","원전","원자로","SMR","가속기","전자선","중성자","양성자","X선","RI","NDT","핵연료"]};
+function _ukw(){ try{const d=JSON.parse(localStorage.getItem('radi_ukw')||'{}');return {strong:d.strong||[],medium:d.medium||[]};}catch(e){return {strong:[],medium:[]}} }
+function _setUkw(d){ localStorage.setItem('radi_ukw',JSON.stringify({strong:d.strong||[],medium:d.medium||[]})); }
 const MOCK = {
   get_overview: ()=>({ok:true,data:{stats:{total:4020,relevant:106,new:8,latest_press_dt:"2026-06-26"},recent:MOCKLIST.slice(0,8).map(_merge)}}),
   list_announcements: (ro,search)=>{const all=(ro?MOCKLIST:MOCKLIST.concat(MOCKEXTRA)).map(_merge).filter(a=>a.state!=='hidden');const q=(search||'').trim();return {ok:true,data:q?all.filter(a=>a.subject.includes(q)):all};},
   run_collect: ()=>new Promise(r=>setTimeout(()=>r({ok:true,data:{fetched:4020,new:3,updated:4017,relevant:125,failed_pages:0,unavailable_pages:15,incomplete:false,expected_total:4169,db_total:4020,stats:{total:4023,relevant:126,new:3,latest_press_dt:"2026-06-27"}}}),1500)),
   rescore: ()=>({ok:true,data:{rescored:4020,stats:{total:4020,relevant:174,new:0,latest_press_dt:"2026-06-26"}}}),
-  get_settings: ()=>({ok:true,data:{strong:["방사선","방사능","방사성","원자력","동위원소","핵의학","방사광","양성자","중성자","중입자","가속기","비파괴검사","선량","피폭","차폐","RI"],medium:["원전","원자로","핵연료","방사선안전","비파괴","의료영상"],threshold:3}}),
+  get_settings: ()=>{const D=_KWDEF,u=_ukw();return {ok:true,data:{strong:D.strong.concat(u.strong.filter(t=>!D.strong.includes(t))),medium:D.medium.concat(u.medium.filter(t=>!D.medium.includes(t))),defaults:D,threshold:3}};},
+  add_keyword:(term,w)=>{term=(term||'').trim();if(!term)return{ok:true};const u=_ukw(),b=w==='strong'?'strong':'medium';u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);if(!_KWDEF[b].includes(term))u[b].push(term);_setUkw(u);return{ok:true};},
+  remove_keyword:(term)=>{const u=_ukw();u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);_setUkw(u);return{ok:true};},
   set_state:(id,st)=>{_setOv(id,{state:st});return{ok:true};},
   set_note:(id,note)=>{_setOv(id,{note:(note||'').trim()||null});return{ok:true};},
   set_track:(id,st)=>{_setOv(id,{track_status:st||null});return{ok:true};},
@@ -634,7 +654,7 @@ function cardHTML(a,i){
     <div class="score ${lvl}" title="관련도 ${a.relevance||0}점 — 방사선 키워드 가중치 합(STRONG 3·MEDIUM 1)"><b>${a.relevance||0}</b><span>관련도</span></div>
     <div class="body-c">
       <div class="title">${esc(a.subject)}</div>
-      <div class="meta"><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>${a.track_status?`<span class="trk">${esc(a.track_status)}</span>`:''}${a.note?'<span class="has-note" title="메모 있음">📝</span>':''}${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
+      <div class="meta"><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>${a.track_status&&a.track_status!=='관심'?`<span class="trk">${esc(a.track_status)}</span>`:''}${a.note?'<span class="has-note" title="메모 있음">📝</span>':''}${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
       ${kws?`<div class="kw">${kws}</div>`:''}
     </div>
     <div class="card-actions">
@@ -679,11 +699,20 @@ function renderDashboard(){
 }
 function renderSettings(){
   const st=S.settings; if(!st)return;
-  $('#kw-strong').innerHTML=st.strong.map(k=>`<span class="s">${esc(k)}</span>`).join('');
-  $('#kw-medium').innerHTML=st.medium.map(k=>`<span class="m">${esc(k)}</span>`).join('');
+  const ds=new Set((st.defaults&&st.defaults.strong)||[]), dm=new Set((st.defaults&&st.defaults.medium)||[]);
+  const render=(arr,cls,defset)=>(arr||[]).map(k=>{
+    const u=!defset.has(k);
+    return `<span class="${cls}${u?' user':''}">${esc(k)}${u?`<i class="rm" data-rm="${esc(k)}" title="삭제">×</i>`:''}</span>`;
+  }).join('');
+  $('#kw-strong').innerHTML=render(st.strong,'s',ds);
+  $('#kw-medium').innerHTML=render(st.medium,'m',dm);
+  $$('#kw-strong .rm, #kw-medium .rm').forEach(x=>x.onclick=async()=>{
+    const r=await api('remove_keyword',x.dataset.rm);
+    if(r&&r.ok){ toast('키워드를 삭제했어요'); await reloadSettings(); }});
   const s=S.overview?S.overview.stats:{};
   $('#set-stats').innerHTML=`전체 <b style="color:var(--ink)">${(s.total||0).toLocaleString()}</b>건 · 관련 <b style="color:var(--radar)">${s.relevant||0}</b>건 · 신규 <b style="color:var(--beacon)">${s.new||0}</b>건 · 최신 ${s.latest_press_dt||'—'}`;
 }
+async function reloadSettings(){ const r=await api('get_settings'); if(r&&r.ok){S.settings=r.data; renderSettings();} }
 
 /* ====== 상세 ====== */
 /* ── 규칙기반 공고 분석 ── */
@@ -989,6 +1018,13 @@ async function doExport(scope){
 }
 $('#btn-export-trk').onclick=()=>doExport('tracked');
 $('#btn-export-rel').onclick=()=>doExport('relevant');
+$('#kw-add-btn')&&($('#kw-add-btn').onclick=async()=>{
+  const inp=$('#kw-input'), term=(inp.value||'').trim(); if(!term){inp.focus();return;}
+  const r=await api('add_keyword',term,$('#kw-weight').value);
+  if(r&&r.ok){ inp.value=''; toast('‘'+term+'’ 추가됨 — 관련도 재계산 시 반영'); await reloadSettings(); }
+  else toast('추가 실패','err');
+});
+$('#kw-input')&&$('#kw-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#kw-add-btn').click();}});
 $('#trk-filter').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   $$('#trk-filter button').forEach(x=>x.classList.toggle('on',x===b)); renderTracked();};
 $('#btn-collect').onclick=()=>doCollect(false);
