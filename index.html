@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>방사선 사업기회 레이더 · RadiRadar</title>
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+:root{
+  /* ===== 디자인 토큰 — Claude 풍 웜 라이트 (테마/색 확장 지점) ===== */
+  --bg:#eceae1;        /* 페이지 바탕(웜 페이퍼) */
+  --bg2:#f4f2ec;       /* 사이드바 */
+  --panel:#ffffff;     /* 카드 */
+  --panel2:#faf8f3;    /* 보조 패널 */
+  --raise:#f2efe7;     /* 호버·입력 */
+  --line:#e7e3d8; --line2:#d8d3c5;          /* 경계 */
+  --ink:#2a2823; --muted:#6f6a5e; --dim:#9a9486;  /* 글자 */
+  --radar:#c96442; --radar-d:#b0512f;       /* 강조(테라코타) */
+  --beacon:#be8a3c; --beacon-d:#9c6f2a;     /* 보조(웜 골드) */
+  --danger:#c0392b; --good:#3f7d56;
+  --tier-mfg:#be8a3c; --tier-use:#c96442; --tier-base:#6f6aa8;  /* 공급제조·이용응용·기반안전 */
+  --sans:"Pretendard Variable","Pretendard","Malgun Gothic","맑은 고딕",sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Consolas,monospace;
+  --glow:none;
+  --shadow:0 1px 2px rgba(40,36,28,.04), 0 4px 14px rgba(40,36,28,.05);
+  --shadow-lg:0 6px 26px rgba(40,36,28,.11);
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--sans); background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+  word-break:keep-all;
+}
+body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 600px at 78% -10%, rgba(201,100,66,.07), transparent 60%),
+    radial-gradient(700px 500px at 0% 110%, rgba(255,180,84,.05), transparent 60%);
+}
+.app{position:relative; z-index:1; display:grid; grid-template-columns:248px 1fr; height:100vh}
+
+/* ===== 좌측 레일 ===== */
+.rail{
+  background:linear-gradient(180deg,var(--bg2),var(--bg)); border-right:1px solid var(--line);
+  display:flex; flex-direction:column; padding:22px 16px; gap:18px;
+}
+.brand{display:flex; align-items:center; gap:11px; padding:2px 6px 0}
+.brand .wm{display:flex; flex-direction:column; line-height:1.05}
+.brand .kr{font-weight:800; font-size:15.5px; letter-spacing:-.02em}
+.brand .en{font-family:var(--mono); font-size:10px; letter-spacing:.32em; color:var(--radar); margin-top:3px}
+.nav{display:flex; flex-direction:column; gap:3px; margin-top:6px}
+.nav button{
+  display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  background:transparent; border:0; color:var(--muted); font-family:var(--sans);
+  font-size:13.5px; font-weight:600; padding:10px 12px; border-radius:10px; cursor:pointer;
+  transition:.16s;
+}
+.nav button .ic{width:18px; height:18px; opacity:.8; flex:none}
+.nav button:hover{background:var(--panel); color:var(--ink)}
+.nav button.on{background:linear-gradient(90deg,rgba(201,100,66,.16),rgba(201,100,66,.03)); color:var(--ink)}
+.nav button.on .ic{opacity:1; color:var(--radar)}
+.nav button.on{box-shadow:inset 2px 0 0 var(--radar)}
+.nav .badge{margin-left:auto; font-family:var(--mono); font-size:10.5px; font-weight:700;
+  background:var(--beacon); color:#23150a; border-radius:20px; padding:1px 7px; min-width:20px; text-align:center}
+.rail .spacer{flex:1}
+.rail-foot{font-size:10.5px; color:var(--dim); font-family:var(--sans); padding:0 8px; line-height:1.7}
+.rail-foot b{color:var(--muted)}
+
+/* ===== 메인 ===== */
+.main{overflow-y:auto; padding:0}
+.main::-webkit-scrollbar{width:10px} .main::-webkit-scrollbar-thumb{background:var(--line2); border-radius:8px}
+.topbar{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:16px;
+  padding:16px 28px; background:rgba(244,242,236,.86); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar h1{font-size:17px; font-weight:800; letter-spacing:-.02em}
+.topbar .sub{font-family:var(--mono); font-size:11px; color:var(--dim); margin-top:2px}
+.topbar .status{margin-left:auto; display:flex; align-items:center; gap:18px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--radar);box-shadow:0 0 10px var(--radar);display:inline-block}
+.dot.idle{background:var(--dim);box-shadow:none}
+.kv{font-family:var(--sans); font-size:11.5px; color:var(--muted)} .kv b{color:var(--ink); font-family:var(--mono)}
+.btn{
+  font-family:var(--sans); font-weight:700; font-size:13px; cursor:pointer; border-radius:10px;
+  padding:9px 16px; border:1px solid var(--line2); background:var(--raise); color:var(--ink);
+  transition:.16s; display:inline-flex; align-items:center; gap:8px;
+}
+.btn:hover{border-color:var(--radar); color:#fff}
+.btn.primary{background:linear-gradient(180deg,#1a3b32,#143029); border-color:var(--radar-d); color:var(--radar)}
+.btn.primary:hover{box-shadow:var(--glow); color:#cffaee}
+.btn:disabled{opacity:.5; cursor:wait}
+.btn .spin{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn.loading .spin{display:inline-block} .btn.loading .lbl{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.view{display:none; padding:26px 28px 60px; animation:rise .5s cubic-bezier(.2,.7,.2,1)}
+.view.on{display:block}
+@keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+
+/* ===== 대시보드 히어로 ===== */
+.hero{display:grid; grid-template-columns:1.42fr .58fr; gap:22px; margin-bottom:22px}
+.hero-card{
+  background:linear-gradient(135deg,var(--panel),var(--panel2)); border:1px solid var(--line);
+  border-radius:var(--r); padding:26px 28px; position:relative; overflow:hidden; box-shadow:var(--shadow);
+}
+.hero-card:not(.radar-card){display:flex; flex-direction:column; justify-content:center}
+.hero-greet{display:flex; gap:18px; align-items:center}
+.speech{flex:1}
+.speech .hi{font-size:13px; color:var(--radar); font-weight:700; font-family:var(--mono); letter-spacing:.04em}
+.speech h2{font-size:23px; font-weight:800; margin:8px 0 9px; letter-spacing:-.022em; line-height:1.36}
+.speech p{font-size:13px; color:var(--muted); line-height:1.6}
+.speech .accent{color:var(--beacon); font-weight:700}
+
+/* 레이더 비주얼 */
+.radar-card{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; padding:20px 18px}
+.radar-legend{display:flex; gap:13px; flex-wrap:wrap; justify-content:center; font-size:11px; color:var(--muted)}
+.radar-legend span{display:inline-flex; align-items:center; gap:5px}
+.radar-legend i{width:8px; height:8px; border-radius:50%}
+.radar{position:relative; width:216px; height:216px}
+.radar .ring{position:absolute; inset:0; border:1px solid rgba(201,100,66,.28); border-radius:50%}
+.radar .ring.r2{inset:28px} .radar .ring.r3{inset:60px} .radar .ring.r4{inset:92px}
+.radar .cross,.radar .cross2{position:absolute; background:rgba(201,100,66,.12)}
+.radar .cross{left:50%; top:0; bottom:0; width:1px; transform:translateX(-.5px)}
+.radar .cross2{top:50%; left:0; right:0; height:1px; transform:translateY(-.5px)}
+.radar .sweep{position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(from 0deg, rgba(201,100,66,.42), rgba(201,100,66,0) 62deg);
+  -webkit-mask:radial-gradient(circle, #000 99%, transparent 100%);
+  animation:sweep 4.2s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}}
+.radar .blip{position:absolute; width:9px; height:9px; border-radius:50%; background:var(--beacon);
+  box-shadow:0 0 10px var(--beacon); transform:translate(-50%,-50%); animation:ping 2.6s ease-out infinite}
+@keyframes ping{0%{opacity:0; transform:translate(-50%,-50%) scale(.4)} 25%{opacity:1}
+  70%{opacity:.85} 100%{opacity:.2; transform:translate(-50%,-50%) scale(1)}}
+.radar .corecount{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none}
+.radar .corecount b{font-family:var(--mono); font-size:34px; font-weight:800; color:var(--radar); text-shadow:var(--glow)}
+.radar .corecount span{font-size:11px; color:var(--muted); margin-top:2px; letter-spacing:.06em}
+
+/* ===== 마스코트 라디 ===== */
+.radi{width:104px; height:118px; flex:none; overflow:visible}
+.radi .body{fill:url(#rg); stroke:#8f4327; stroke-width:2}
+.radi .eye{fill:#43291c}
+.radi .shine{fill:#ffe7da}
+.radi .mouth{fill:none; stroke:#43291c; stroke-width:2.4; stroke-linecap:round}
+.radi .ant{stroke:#d77f5e; stroke-width:2.2; stroke-linecap:round}
+.radi .beacon{fill:var(--beacon); filter:drop-shadow(0 0 5px var(--beacon))}
+.radi .orbit{fill:none; stroke:rgba(201,100,66,.45); stroke-width:1.4}
+.radi .electron{fill:var(--radar); filter:drop-shadow(0 0 4px var(--radar))}
+.radi .cheek{fill:rgba(255,180,84,.30)}
+.radi .beacon{animation:beat 1.6s ease-in-out infinite}
+@keyframes beat{0%,100%{opacity:.65} 50%{opacity:1}}
+.radi .eyes{transform-origin:60px 64px; animation:blink 5.4s infinite}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)} 97%{transform:scaleY(.1)}}
+.radi.scanning .beacon{animation:beat .5s ease-in-out infinite}
+.radi.happy .mouth{stroke-width:3}
+
+/* ===== 통계 카드 ===== */
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px}
+.stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:18px 18px 16px; position:relative; overflow:hidden; box-shadow:var(--shadow)}
+.stat::after{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--radar); opacity:.0; transition:.2s}
+.stat:hover::after{opacity:.9}
+.stat .lab{font-size:11.5px; color:var(--muted); font-weight:600; letter-spacing:.02em}
+.stat .num{font-family:var(--mono); font-size:30px; font-weight:800; margin-top:8px; letter-spacing:-.02em}
+.stat .num small{font-size:13px; color:var(--dim); font-weight:600; margin-left:3px}
+.stat.accent .num{color:var(--radar)} .stat.beacon .num{color:var(--beacon)}
+
+/* ===== 섹션 제목 ===== */
+.sec-h{display:flex; align-items:center; gap:10px; margin:6px 2px 14px}
+.sec-h h3{font-size:14.5px; font-weight:800; letter-spacing:-.01em}
+.sec-h .tag{font-family:var(--mono); font-size:10.5px; color:var(--radar); border:1px solid var(--radar-d); padding:1px 7px; border-radius:6px}
+.sec-h .line{flex:1; height:1px; background:linear-gradient(90deg,var(--line2),transparent)}
+
+/* ===== 공고 리스트 ===== */
+.toolbar{display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap}
+.search{flex:1; min-width:220px; display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:9px 12px}
+.search input{flex:1; background:transparent; border:0; color:var(--ink); font-family:var(--sans); font-size:13px; outline:none}
+.search input::placeholder{color:var(--dim)}
+.chiptog{display:flex; gap:6px}
+.chiptog button{font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line); padding:8px 12px; border-radius:9px; cursor:pointer; transition:.15s}
+.chiptog button.on{color:var(--radar); border-color:var(--radar-d); background:rgba(201,100,66,.08)}
+.chiplbl{font-size:10px; font-weight:700; color:var(--dim); letter-spacing:.08em; align-self:center; margin-left:6px}
+/* 계층별 색: 공급제조=호박, 이용응용=틸, 기반안전=보라 */
+#tier-rel button[data-v="mfg"].on{color:var(--tier-mfg); border-color:var(--beacon-d); background:rgba(255,180,84,.10)}
+#tier-rel button[data-v="use"].on{color:var(--tier-use); border-color:var(--radar-d); background:rgba(201,100,66,.10)}
+#tier-rel button[data-v="base"].on{color:var(--tier-base); border-color:#5a4fb0; background:rgba(155,140,255,.12)}
+/* 카드 계층 태그 */
+.tier-tag{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px; letter-spacing:.01em; white-space:nowrap}
+.t-mfg{color:#946724; background:rgba(190,138,60,.12); border:1px solid var(--beacon-d)}
+.t-use{color:#a94c2b; background:rgba(201,100,66,.10); border:1px solid var(--radar-d)}
+.t-base{color:#514c86; background:rgba(111,106,168,.12); border:1px solid #6f6aa8}
+/* 관련도 강조(고득점) */
+.score.hi{background:rgba(201,100,66,.16); border-color:var(--radar); box-shadow:0 0 16px rgba(201,100,66,.20)}
+.score.hi b{color:var(--radar)}
+/* 히어로 상태 신호바 */
+.signals{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; padding-top:16px; border-top:1px solid var(--line)}
+.signals .sig{display:inline-flex; align-items:center; gap:7px; font-size:11.5px; color:var(--muted); background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:6px 11px}
+.signals .sig b{color:var(--ink); font-family:var(--mono); font-weight:700}
+.signals .sig i.d{width:7px; height:7px; border-radius:50%; background:var(--radar); box-shadow:0 0 8px var(--radar)}
+
+.list{display:flex; flex-direction:column; gap:10px}
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:15px 17px;
+  display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; cursor:pointer;
+  transition:.16s; position:relative; opacity:0; animation:rise .45s forwards; box-shadow:var(--shadow);
+}
+.card:hover{border-color:var(--line2); box-shadow:var(--shadow-lg); transform:translateY(-2px)}
+.score{width:46px; height:46px; flex:none; border-radius:11px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; background:rgba(201,100,66,.10); border:1px solid var(--radar-d)}
+.score b{font-family:var(--mono); font-size:17px; font-weight:800; color:var(--radar); line-height:1}
+.score span{font-size:8.5px; color:var(--muted); margin-top:2px; letter-spacing:.05em}
+.score.lo{background:rgba(142,166,183,.08); border-color:var(--line2)} .score.lo b{color:var(--muted)}
+.card .body-c{min-width:0}
+.card .title{font-size:14px; font-weight:700; line-height:1.4; margin-bottom:7px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.card .meta{display:flex; gap:12px; flex-wrap:wrap; align-items:center; font-size:11.5px; color:var(--dim); font-family:var(--sans)}
+.card .meta .dt{font-family:var(--mono)}
+.card .meta .new{color:#23150a; background:var(--beacon); font-weight:800; padding:1px 6px; border-radius:5px; font-family:var(--sans); font-size:10px}
+.kw{display:flex; gap:5px; flex-wrap:wrap; margin-top:8px}
+.kw span{font-size:10.5px; color:var(--radar); background:rgba(201,100,66,.08); border:1px solid var(--radar-d); padding:1px 7px; border-radius:20px}
+.card .meta .src{margin-left:auto; font-size:10px; padding:1px 6px; border-radius:5px; border:1px solid var(--line2); color:var(--muted)}
+.card .meta .src-msit{color:var(--radar); border-color:var(--radar-d)}
+.card .meta .src-ntis{color:var(--beacon); border-color:var(--beacon-d)}
+.card .go{color:var(--dim); font-size:20px; transition:.15s} .card:hover .go{color:var(--radar); transform:translateX(2px)}
+.empty{text-align:center; color:var(--dim); padding:60px 20px; font-size:13px}
+.empty .ri{opacity:.5; margin-bottom:14px}
+
+/* ===== 설정 ===== */
+.set-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:22px; box-shadow:var(--shadow)}
+.panel h4{font-size:13.5px; font-weight:800; margin-bottom:5px}
+.panel .desc{font-size:12px; color:var(--muted); margin-bottom:14px; line-height:1.55}
+.kwbox{display:flex; gap:7px; flex-wrap:wrap}
+.kwbox span{font-size:12px; padding:5px 11px; border-radius:8px; background:var(--raise); border:1px solid var(--line2); color:var(--ink)}
+.kwbox span.s{color:var(--radar); border-color:var(--radar-d); background:rgba(201,100,66,.07)}
+.kwbox span.m{color:var(--beacon); border-color:var(--beacon-d); background:rgba(255,180,84,.06)}
+
+/* ===== 상세 모달 ===== */
+.modal{position:fixed; inset:0; z-index:40; display:none; align-items:center; justify-content:center; padding:30px}
+.modal.on{display:flex}
+.modal .scrim{position:absolute; inset:0; background:rgba(40,36,28,.42); backdrop-filter:blur(4px); animation:rise .25s}
+.modal .sheet{position:relative; width:min(720px,100%); max-height:86vh; overflow-y:auto;
+  background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--line2);
+  border-radius:16px; padding:28px 30px; animation:pop .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0; transform:translateY(16px) scale(.98)} to{opacity:1; transform:none}}
+.modal .x{position:absolute; top:16px; right:18px; background:var(--raise); border:1px solid var(--line2);
+  color:var(--muted); width:32px; height:32px; border-radius:9px; cursor:pointer; font-size:16px}
+.modal .x:hover{color:var(--ink); border-color:var(--radar)}
+.modal h3{font-size:18px; font-weight:800; line-height:1.4; padding-right:30px; margin-bottom:14px}
+.detail-meta{display:grid; grid-template-columns:auto 1fr; gap:8px 16px; font-size:13px; margin-bottom:18px}
+.detail-meta .k{color:var(--muted); font-family:var(--mono); font-size:12px}
+.detail-meta .v{color:var(--ink)}
+.files{display:flex; flex-direction:column; gap:7px; margin:14px 0}
+.file{display:flex; align-items:center; gap:10px; background:var(--raise); border:1px solid var(--line); border-radius:9px; padding:10px 13px; font-size:12.5px; cursor:pointer; transition:.15s}
+.file:hover{border-color:var(--radar)} .file .fi{color:var(--beacon)}
+.modal .actions{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap}
+
+/* ===== 토스트 ===== */
+.toasts{position:fixed; bottom:22px; right:22px; z-index:60; display:flex; flex-direction:column; gap:10px}
+.toast{background:var(--raise); border:1px solid var(--line2); border-left:3px solid var(--radar);
+  border-radius:10px; padding:12px 16px; font-size:13px; min-width:240px; box-shadow:0 12px 30px rgba(0,0,0,.4);
+  animation:slide .3s cubic-bezier(.2,.8,.2,1)}
+.toast.warn{border-left-color:var(--beacon)} .toast.err{border-left-color:var(--danger)}
+@keyframes slide{from{opacity:0; transform:translateX(20px)} to{opacity:1; transform:none}}
+@media (max-width:1080px){.hero{grid-template-columns:1fr} .stats{grid-template-columns:repeat(2,1fr)} .set-grid{grid-template-columns:1fr}}
+@media (max-width:900px){.app{grid-template-columns:64px 1fr} .brand .wm,.nav button span:not(.badge),.rail-foot{display:none} .nav button{justify-content:center}}
+/* ===== 폰(≤600px): 사이드바 → 하단 탭바, 1열 스택 ===== */
+@media (max-width:600px){
+  .app{grid-template-columns:1fr}
+  .main{padding-bottom:68px}
+  .rail{position:fixed; inset:auto 0 0 0; z-index:30; flex-direction:row; align-items:stretch;
+        gap:0; padding:5px 6px; border-right:0; border-top:1px solid var(--line);
+        background:rgba(244,242,236,.97); backdrop-filter:blur(8px)}
+  .brand,.rail .spacer,.rail-foot{display:none}
+  .nav{flex-direction:row; width:100%; justify-content:space-around; gap:2px; margin:0}
+  .nav button{flex:1; flex-direction:column; gap:3px; padding:7px 3px; font-size:10px;
+        justify-content:center; border-radius:10px}
+  .nav button span:not(.badge){display:inline; font-weight:600}
+  .nav button.on{box-shadow:none; background:rgba(201,100,66,.10)}
+  .nav .badge{display:none}
+  .topbar{padding:11px 15px} .topbar h1{font-size:15px} .topbar .sub{display:none}
+  .topbar .status .kv{display:none}
+  .view{padding:16px 13px 30px}
+  .stats{grid-template-columns:repeat(2,1fr); gap:10px}
+  .stat{padding:14px 14px 12px} .stat .num{font-size:23px}
+  .radi{width:80px; height:92px}
+  .speech h2{font-size:18px} .speech p{font-size:12.5px}
+  .hero-card{padding:20px}
+  .card{padding:13px 14px; gap:11px} .card .title{font-size:13.5px}
+  .chiplbl{margin-left:2px}
+  .modal{padding:14px} .modal .sheet{padding:22px 18px}
+}
+/* 마스코트 오류 상태 */
+.radi.error .beacon{fill:var(--danger);filter:drop-shadow(0 0 5px var(--danger));animation:beat .5s ease-in-out infinite}
+.radi.error .eyes{animation:none}
+.dot.err{background:var(--danger);box-shadow:0 0 10px var(--danger)}
+/* 목록 상단 카운터 */
+.list-note{font-size:11.5px;color:var(--muted);margin:0 2px 10px;font-family:var(--sans)}
+.list-note b{color:var(--ink);font-family:var(--mono)}
+/* 키보드 포커스 가시화 */
+:focus-visible{outline:2px solid var(--radar);outline-offset:2px;border-radius:6px}
+/* 수집 진행 결정형 표시 */
+.btn .lbl[data-progress]{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){
+  .radar .sweep,.radar .blip,.radi .beacon,.radi .eyes{animation:none!important}
+  .radi .electron{display:none}
+  .view,.card,.modal .sheet,.toast{animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 좌측 레일 -->
+  <aside class="rail">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="#c96442" stroke-opacity=".5"/><circle cx="20" cy="20" r="11" stroke="#c96442" stroke-opacity=".3"/><circle cx="20" cy="20" r="3" fill="#c96442"/><path d="M20 20 L33 11" stroke="#ffb454" stroke-width="2" stroke-linecap="round"/></svg>
+      <div class="wm"><span class="kr">방사선 레이더</span><span class="en">RADIRADAR</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-v="dashboard" class="on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3zM13 21h8V8h-8zM3 21h8v-5H3zM13 5h8V3h-8z"/></svg><span class="lbl">대시보드</span></button>
+      <button data-v="relevant"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="lbl">방사선 공고</span> <em class="badge" id="badge-rel" style="display:none">0</em></button>
+      <button data-v="all"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="lbl">전체 공고</span></button>
+      <button data-v="settings"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.18-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="lbl">설정</span></button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="rail-foot">
+      출처 <b>과기정통부 사업공고</b><br>data.go.kr · RadiRadar <b>v0.1</b><br>
+      <span id="foot-time">—</span>
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="top-title">대시보드</h1>
+        <div class="sub" id="top-sub">방사선·원자력 사업기회 관제</div>
+      </div>
+      <div class="status">
+        <span class="kv"><span class="dot idle" id="live-dot"></span> <span id="live-txt">대기</span></span>
+        <span class="kv">최신 <b id="latest">—</b></span>
+        <button class="btn primary" id="btn-collect"><span class="spin"></span><span class="lbl">공고 수집</span></button>
+      </div>
+    </header>
+
+    <!-- 대시보드 -->
+    <section class="view on" data-view="dashboard">
+      <div class="hero">
+        <div class="hero-card">
+          <div class="hero-greet">
+            <!-- 마스코트 라디 -->
+            <svg class="radi" id="radi" viewBox="0 0 120 132">
+              <defs><radialGradient id="rg" cx="40%" cy="32%" r="80%">
+                <stop offset="0%" stop-color="#efa98a"/><stop offset="55%" stop-color="#d4734f"/><stop offset="100%" stop-color="#b0512f"/>
+              </radialGradient>
+              <path id="orbitpath" d="M60 78 m -50 0 a 50 18 0 1 0 100 0 a 50 18 0 1 0 -100 0" fill="none"/></defs>
+              <ellipse class="orbit" cx="60" cy="78" rx="50" ry="18"/>
+              <circle class="electron" r="3.6"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#orbitpath"/></animateMotion></circle>
+              <line class="ant" x1="60" y1="30" x2="60" y2="12"/>
+              <circle class="beacon" cx="60" cy="9" r="5"/>
+              <path class="body" d="M60 28 C86 28 98 46 98 66 C98 88 82 100 60 100 C38 100 22 88 22 66 C22 46 34 28 60 28 Z"/>
+              <ellipse class="cheek" cx="40" cy="74" rx="7" ry="4.5"/><ellipse class="cheek" cx="80" cy="74" rx="7" ry="4.5"/>
+              <g class="eyes">
+                <ellipse class="eye" cx="48" cy="62" rx="6" ry="8"/><ellipse class="eye" cx="72" cy="62" rx="6" ry="8"/>
+                <circle class="shine" cx="50" cy="59" r="2"/><circle class="shine" cx="74" cy="59" r="2"/>
+              </g>
+              <path class="mouth" id="mouth" d="M50 78 Q60 86 70 78"/>
+            </svg>
+            <div class="speech">
+              <div class="hi">// RADI ONLINE</div>
+              <h2 id="greet">안녕하세요! 방사선 사업기회를<br>레이더로 훑고 있어요.</h2>
+              <p id="greet-sub">지금까지 <span class="accent" id="g-rel">0</span>건의 방사선·원자력 관련 공고를 포착했어요. 새로 들어온 게 있는지 <span class="accent">‘공고 수집’</span>으로 확인해 보세요.</p>
+            </div>
+          </div>
+          <div class="signals" id="hero-signals"></div>
+        </div>
+        <div class="hero-card radar-card">
+          <div class="radar">
+            <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="ring r4"></div>
+            <div class="cross"></div><div class="cross2"></div>
+            <div class="sweep"></div>
+            <div class="corecount"><b id="radar-num">0</b><span>RELEVANT</span></div>
+            <div id="blips"></div>
+          </div>
+          <div class="radar-legend">
+            <span><i style="background:var(--tier-mfg)"></i>공급·제조</span>
+            <span><i style="background:var(--tier-use)"></i>이용·응용</span>
+            <span><i style="background:var(--tier-base)"></i>기반·안전</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats" id="stats">
+        <div class="stat"><div class="lab">전체 공고</div><div class="num" data-k="total">0</div></div>
+        <div class="stat accent"><div class="lab">방사선 관련</div><div class="num" data-k="relevant">0<small>건</small></div></div>
+        <div class="stat beacon"><div class="lab">신규</div><div class="num" data-k="new">0<small>건</small></div></div>
+        <div class="stat"><div class="lab">최신 공고일</div><div class="num" data-k="latest" style="font-size:18px">—</div></div>
+      </div>
+
+      <div class="sec-h"><h3>최근 방사선·원자력 공고</h3><span class="tag">RELEVANT</span><div class="line"></div></div>
+      <div class="list" id="dash-list"></div>
+    </section>
+
+    <!-- 방사선 공고 -->
+    <section class="view" data-view="relevant">
+      <div class="toolbar">
+        <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-rel" aria-label="방사선 공고 검색" placeholder="제목으로 검색…"></div>
+        <span class="chiplbl">상태</span>
+        <div class="chiptog" id="state-rel" role="group" aria-label="상태 필터">
+          <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="new" aria-pressed="false">신규</button><button data-v="saved" aria-pressed="false">저장</button>
+        </div>
+        <span class="chiplbl">소스</span>
+        <div class="chiptog" id="source-rel" role="group" aria-label="소스 필터">
+          <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="msit" aria-pressed="false">과기정통부</button><button data-v="ntis" aria-pressed="false">NTIS</button>
+        </div>
+        <span class="chiplbl">계층</span>
+        <div class="chiptog" id="tier-rel" role="group" aria-label="계층 필터">
+          <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="mfg" aria-pressed="false">공급·제조</button><button data-v="use" aria-pressed="false">이용·응용</button><button data-v="base" aria-pressed="false">기반·안전</button>
+        </div>
+      </div>
+      <div class="list-note" id="rel-note"></div>
+      <div class="list" id="rel-list"></div>
+    </section>
+
+    <!-- 전체 공고 -->
+    <section class="view" data-view="all">
+      <div class="toolbar">
+        <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-all" aria-label="전체 공고 검색" placeholder="전체 공고 검색(제목)…"></div>
+      </div>
+      <div class="list-note" id="all-note"></div>
+      <div class="list" id="all-list"></div>
+    </section>
+
+    <!-- 설정 -->
+    <section class="view" data-view="settings">
+      <div class="set-grid">
+        <div class="panel">
+          <h4>방사선 관련도 키워드</h4>
+          <p class="desc">공고 제목에서 아래 키워드를 찾아 관련도를 매깁니다. <b style="color:var(--radar)">STRONG</b>은 가중 3, <b style="color:var(--beacon)">MEDIUM</b>은 가중 1.</p>
+          <div style="font-size:11px;color:var(--muted);margin:4px 0 7px;font-family:var(--mono)">STRONG</div>
+          <div class="kwbox" id="kw-strong"></div>
+          <div style="font-size:11px;color:var(--muted);margin:14px 0 7px;font-family:var(--mono)">MEDIUM</div>
+          <div class="kwbox" id="kw-medium"></div>
+        </div>
+        <div class="panel">
+          <h4>수집 / 데이터</h4>
+          <p class="desc">과학기술정보통신부 사업공고(data.go.kr)에서 공고를 가져옵니다. 전체 백필은 처음 한 번, 이후는 ‘공고 수집’으로 최신만 갱신하세요.</p>
+          <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn primary" id="btn-collect2"><span class="spin"></span><span class="lbl">최신 수집</span></button>
+            <button class="btn" id="btn-full"><span class="spin"></span><span class="lbl">전체 백필</span></button>
+            <button class="btn" id="btn-rescore"><span class="spin"></span><span class="lbl">관련도 재계산</span></button>
+          </div>
+          <div style="margin-top:18px;font-family:var(--sans);font-size:12.5px;color:var(--muted);line-height:1.9" id="set-stats"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal" id="modal">
+  <div class="scrim" data-close></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+</div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+/* ====== 백엔드 브리지 (pywebview) + 브라우저 미리보기 목업 폴백 ====== */
+const MOCK = {
+  get_overview: ()=>({ok:true,data:{stats:{total:4020,relevant:174,new:174,latest_press_dt:"2026-06-26"},recent:MOCKLIST.slice(0,8)}}),
+  list_announcements: (ro,search)=>{const all=ro?MOCKLIST:MOCKLIST.concat(MOCKEXTRA);const q=(search||'').trim();return {ok:true,data:q?all.filter(a=>a.subject.includes(q)):all};},
+  run_collect: ()=>new Promise(r=>setTimeout(()=>r({ok:true,data:{fetched:4020,new:3,updated:4017,relevant:125,failed_pages:0,unavailable_pages:15,incomplete:false,expected_total:4169,db_total:4020,stats:{total:4023,relevant:126,new:3,latest_press_dt:"2026-06-27"}}}),1500)),
+  rescore: ()=>({ok:true,data:{rescored:4020,stats:{total:4020,relevant:174,new:0,latest_press_dt:"2026-06-26"}}}),
+  get_settings: ()=>({ok:true,data:{strong:["방사선","방사능","방사성","원자력","동위원소","핵의학","방사광","양성자","중성자","중입자","가속기","비파괴검사","선량","피폭","차폐","RI"],medium:["원전","원자로","핵연료","방사선안전","비파괴","의료영상"],threshold:3}}),
+  set_state:()=>({ok:true}), open_url:(u)=>{window.open(u,"_blank");return{ok:true}}
+};
+const MOCKLIST=[
+ {id:"m1",subject:"2026년 하반기 원자력정책연구사업 공고",press_dt:"2026-06-16",dept_name:"원자력정책과",relevance:3,matched:["원자력"],state:"new",source:"msit",manager_name:"김담당",manager_tel:"044-202-0000",view_url:"https://www.msit.go.kr",files:[{name:"공고문.hwpx",url:"#"}]},
+ {id:"n1",subject:"양성자가속기성능향상선행RD사업 신규과제(정책지정)",press_dt:"2026-04-08",dept_name:"",relevance:6,matched:["양성자","가속기"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:"https://www.ntis.go.kr",files:[]},
+ {id:"m2",subject:"2026년도 비파괴검사 기술역량 강화 사업 신규과제 재공모 공고",press_dt:"2026-03-18",dept_name:"원자력연구개발과",relevance:7,matched:["원자력","비파괴검사","비파괴"],state:"new",manager_name:"이담당",manager_tel:"044-202-0001",view_url:"https://www.msit.go.kr",files:[{name:"붙임.pdf",url:"#"}]},
+ {id:"m3",subject:"2026년도 국가전략기술 핵심역량 확보를 위한 중성자 활용 기술 고도화사업 신규과제 공모",press_dt:"2026-02-11",dept_name:"원자력연구개발과",relevance:6,matched:["중성자","원자력(부서)"],state:"new",manager_name:"박담당",manager_tel:"044-202-0002",view_url:"https://www.msit.go.kr",files:[]},
+ {id:"m4",subject:"2026년 가속기핵심기술개발사업 신규과제 선정결과 공고",press_dt:"2026-05-29",dept_name:"미래원자력기술과",relevance:3,matched:["가속기"],state:"read",manager_name:"최담당",manager_tel:"044-202-0003",view_url:"https://www.msit.go.kr",files:[]},
+ {id:"m5",subject:"2025년도 미래 방사선 강점기술 고도화사업 신규과제 공모",press_dt:"2025-02-04",dept_name:"원자력연구개발과",relevance:6,matched:["방사선","원자력"],state:"saved",manager_name:"정담당",manager_tel:"044-202-0004",view_url:"https://www.msit.go.kr",files:[{name:"공모안내.hwpx",url:"#"}]}
+];
+const MOCKEXTRA=[{id:"x1",subject:"2026년 ICT 중소기업 정보보호 지원 사업 수요기업 모집 공고",press_dt:"2026-06-26",dept_name:"정보보호산업과",relevance:0,matched:[],state:"new",view_url:"#",files:[]}];
+
+let BRIDGE=null;
+function api(method,...args){
+  if(BRIDGE && BRIDGE[method]) return Promise.resolve(BRIDGE[method](...args));
+  return Promise.resolve(MOCK[method]? MOCK[method](...args): {ok:false,error:"no method"});
+}
+window.addEventListener('pywebviewready',()=>{ BRIDGE=window.pywebview.api; boot(true); });
+
+/* ====== 상태 ====== */
+const S={overview:null, rel:[], all:[], settings:null};
+let _lastFocused=null;
+const SRC_LABEL={msit:'과기정통부', ntis:'NTIS'};   // 소스 키 → 표시명
+const TIER_LABEL={mfg:'공급·제조', use:'이용·응용', base:'기반·안전'};
+// 매칭 키워드로 방사선 산업 3계층 분류(정의 taxonomy 기반). 안전→base, 선원·장비·소재 제조→mfg, 그 외 응용→use.
+function tierOf(a){
+  const ks=(a.matched||[]).join('|');
+  if(/안전관리|작업종사자|선량평가|피폭|폐기물|면허|RASIS|RATIS|정기검사/.test(ks)) return 'base';
+  if(/동위원소|핵종|발생장치|검출기|디텍터|신틸레이터|선량계|차폐|핫셀|표지화합물|방사성의약품|Mo-99|Tc-99m|Lu-177|Ac-225|Ir-192|Co-60|I-131|사이클로트론|방사선계측/.test(ks)) return 'mfg';
+  return 'use';   // 치료·검사·조사·식품·가속기·방사광 등 응용 + 방사선/원자력 일반
+}
+const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
+
+/* ====== 유틸 ====== */
+function toast(msg,kind=""){const wrap=$('#toasts');
+  if([...wrap.children].some(c=>c.dataset.msg===msg))return;        // 동일 메시지 중복 무시
+  while(wrap.children.length>=4) wrap.firstChild.remove();          // 누적 상한 4
+  const t=document.createElement('div');t.className='toast '+kind;t.dataset.msg=msg;t.textContent=msg;
+  wrap.appendChild(t);
+  const dur=kind==='err'?6000:3300;
+  setTimeout(()=>{t.style.opacity=0;t.style.transition='.3s';setTimeout(()=>t.remove(),300)},dur);}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));}
+function countUp(el,to){const from=+(el.dataset.cur||0);if(from===to){el.firstChild&&(el.childNodes[0].nodeValue=to);return;}const t0=performance.now(),d=700;function f(t){const k=Math.min(1,(t-t0)/d);const v=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));el.childNodes[0].nodeValue=v.toLocaleString();if(k<1)requestAnimationFrame(f);else el.dataset.cur=to;}requestAnimationFrame(f);}
+function setRadi(state){const r=$('#radi');r.className='radi '+(state||'');
+  const m={scanning:'M50 80 Q60 84 70 80',happy:'M48 76 Q60 90 72 76',error:'M50 84 Q60 76 70 84'}[state]||'M50 78 Q60 86 70 78';
+  $('#mouth').setAttribute('d',m);}
+let _busy=false;
+window.onCollectProgress=function(done,total){
+  const pct=total?Math.round(done/total*100):0;
+  $('#live-txt').textContent=`수집 중 ${pct}%`;
+  document.querySelectorAll('#btn-collect .lbl,#btn-collect2 .lbl,#btn-full .lbl').forEach(l=>{l.setAttribute('data-progress','');l.textContent=`${pct}%`;});
+};
+
+/* ====== 렌더 ====== */
+function cardHTML(a,i){
+  const lvl=a.relevance>=6?'hi':(a.relevance<3?'lo':'');
+  const isNew=a.state==='new';
+  const tier=tierOf(a), tlab={mfg:'공급·제조',use:'이용·응용',base:'기반·안전'}[tier];
+  const kws=(a.matched||[]).slice(0,4).map(k=>`<span>${esc(k)}</span>`).join('');
+  return `<div class="card" style="animation-delay:${i*40}ms" data-id="${esc(a.id)}">
+    <div class="score ${lvl}" title="관련도 ${a.relevance||0}점 — 방사선 키워드 가중치 합(STRONG 3·MEDIUM 1)"><b>${a.relevance||0}</b><span>관련도</span></div>
+    <div class="body-c">
+      <div class="title">${esc(a.subject)}</div>
+      <div class="meta"><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
+      ${kws?`<div class="kw">${kws}</div>`:''}
+    </div>
+    <div class="go">›</div>
+  </div>`;
+}
+function renderList(el,items,emptyKind){
+  if(!items||!items.length){
+    const msg=emptyKind==='search' ? '검색·필터 결과가 없습니다.' : '아직 수집된 공고가 없습니다.<br>상단 ‘공고 수집’으로 데이터를 가져오세요.';
+    el.innerHTML=`<div class="empty"><svg class="ri" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><div>${msg}</div></div>`;return;
+  }
+  el.innerHTML=items.map(cardHTML).join('');
+  el.querySelectorAll('.card').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
+}
+function renderDashboard(){
+  const o=S.overview; if(!o)return; const s=o.stats;
+  $$('#stats .num').forEach(n=>{const k=n.dataset.k; if(k==='latest'){n.childNodes[0].nodeValue=s.latest_press_dt||'—';}else countUp(n,s[k]||0);});
+  countUp($('#radar-num'),s.relevant||0); $('#g-rel').textContent=(s.relevant||0).toLocaleString();
+  const sg=$('#hero-signals'); if(sg) sg.innerHTML=`<span class="sig"><i class="d"></i>활성 소스 <b>과기정통부 · NTIS</b></span><span class="sig">신규 <b>${(s.new||0).toLocaleString()}건</b></span><span class="sig">최신 공고 <b>${esc(s.latest_press_dt||'—')}</b></span>`;
+  $('#latest').textContent=s.latest_press_dt||'—';
+  const b=$('#badge-rel'); if(s.relevant){b.style.display='inline-block';b.textContent=s.relevant>999?'999+':s.relevant;} else {b.style.display='none';}
+  // 블립
+  const blips=$('#blips'); blips.innerHTML=''; const n=Math.min(7,o.recent.length||0);
+  for(let i=0;i<n;i++){const ang=Math.random()*6.28,rad=30+Math.random()*95;const x=131+Math.cos(ang)*rad,y=131+Math.sin(ang)*rad;const d=document.createElement('div');d.className='blip';d.style.left=x+'px';d.style.top=y+'px';d.style.animationDelay=(i*0.34)+'s';blips.appendChild(d);}
+  renderList($('#dash-list'),o.recent);
+}
+function renderSettings(){
+  const st=S.settings; if(!st)return;
+  $('#kw-strong').innerHTML=st.strong.map(k=>`<span class="s">${esc(k)}</span>`).join('');
+  $('#kw-medium').innerHTML=st.medium.map(k=>`<span class="m">${esc(k)}</span>`).join('');
+  const s=S.overview?S.overview.stats:{};
+  $('#set-stats').innerHTML=`전체 <b style="color:var(--ink)">${(s.total||0).toLocaleString()}</b>건 · 관련 <b style="color:var(--radar)">${s.relevant||0}</b>건 · 신규 <b style="color:var(--beacon)">${s.new||0}</b>건 · 최신 ${s.latest_press_dt||'—'}`;
+}
+
+/* ====== 상세 ====== */
+async function openDetail(id){
+  let a=[...S.rel,...S.all,...(S.overview?S.overview.recent:[])].find(x=>x.id===id);
+  if(!a){const r=await api('get_detail',id); if(r&&r.ok)a=r.data;}
+  if(!a)return;
+  const files=(a.files||[]).map(f=>`<div class="file" data-url="${esc(f.url)}"><span class="fi">▤</span> ${esc(f.name||f.url)}</div>`).join('');
+  _lastFocused=document.activeElement;
+  $('#sheet').innerHTML=`<button class="x" data-close aria-label="닫기">✕</button>
+    <h3 id="sheet-title">${esc(a.subject)}</h3>
+    <div class="detail-meta">
+      <div class="k">관련도</div><div class="v" style="color:var(--radar);font-weight:700">${esc(String(a.relevance))} 점 ${(a.matched||[]).length?'· '+(a.matched||[]).map(esc).join(', '):''}</div>
+      <div class="k">게시일</div><div class="v">${esc(a.press_dt||'—')}</div>
+      <div class="k">담당부서</div><div class="v">${esc(a.dept_name||'—')}</div>
+      <div class="k">담당자</div><div class="v">${esc(a.manager_name||'—')} ${a.manager_tel?'· '+esc(a.manager_tel):''}</div>
+    </div>
+    ${files?`<div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:6px">첨부파일</div><div class="files">${files}</div>`:''}
+    <div class="actions">
+      <button class="btn primary" data-open="${esc(a.view_url||'')}">공고 원문 열기 ↗</button>
+      <button class="btn" data-state="saved">저장</button>
+      <button class="btn" data-state="hidden">숨김</button>
+    </div>`;
+  $('#modal').classList.add('on');
+  $('#sheet').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeModal);
+  const openBtn=$('#sheet').querySelector('[data-open]');
+  openBtn.onclick=async e=>{const r=await api('open_url',e.currentTarget.dataset.open); if(r&&r.ok&&r.data===false) toast('이 링크는 열 수 없습니다','warn');};
+  $('#sheet').querySelectorAll('.file').forEach(f=>f.onclick=async()=>{
+    if(!f.dataset.url||f.dataset.url==='#'){toast('첨부 링크가 없습니다','warn');return;}
+    const r=await api('open_url',f.dataset.url); if(r&&r.ok&&r.data===false) toast('이 첨부는 열 수 없습니다','warn');});
+  $('#sheet').querySelectorAll('[data-state]').forEach(b=>b.onclick=async()=>{
+    const st=b.dataset.state; const r=await api('set_state',id,st);
+    if(r&&r.ok){ updateLocalState(id,st); toast(st==='saved'?'저장했어요':'숨김 처리했어요'); refreshCurrentList(); }
+    else toast('상태 변경 실패','err');
+    closeModal();
+  });
+  setTimeout(()=>{const c=$('#sheet').querySelector('.x'); c&&c.focus();},0);   // 모달로 포커스
+  $('#sheet').onkeydown=_trapTab;
+}
+function _trapTab(e){
+  if(e.key!=='Tab')return;
+  const f=[...$('#sheet').querySelectorAll('button,[href],input,[tabindex]:not([tabindex="-1"])')].filter(el=>el.offsetParent!==null);
+  if(!f.length)return; const first=f[0],last=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+}
+function closeModal(){ $('#modal').classList.remove('on'); if(_lastFocused&&_lastFocused.focus){try{_lastFocused.focus();}catch(e){}} }
+function updateLocalState(id,st){
+  [S.rel,S.all,(S.overview?S.overview.recent:[])].forEach(arr=>{ if(!arr)return;
+    const i=arr.findIndex(x=>x.id===id); if(i<0)return;
+    if(st==='hidden') arr.splice(i,1); else arr[i].state=st;   // 숨김은 목록에서 즉시 제거
+  });
+}
+function refreshCurrentList(){
+  const on=$$('#nav button').find(b=>b.classList.contains('on')); const v=on&&on.dataset.v;
+  if(v==='relevant'){applyRelFilters();}
+  else if(v==='all') renderList($('#all-list'),S.all);
+  else if(v==='dashboard'&&S.overview) renderList($('#dash-list'),S.overview.recent);
+}
+$('#modal').querySelector('.scrim').onclick=closeModal;
+document.addEventListener('keydown',e=>e.key==='Escape'&&$('#modal').classList.contains('on')&&closeModal());
+
+/* ====== 수집 ====== */
+async function doCollect(full){
+  if(_busy) return; _busy=true;
+  const btns=[$('#btn-collect'),$('#btn-collect2'),$('#btn-full'),$('#btn-rescore')].filter(Boolean);
+  btns.forEach(b=>{b.classList.add('loading');b.disabled=true;});
+  setRadi('scanning'); $('#live-dot').className='dot'; $('#live-txt').textContent='수집 시작…';
+  toast(full?'전체 백필 시작 (수백 페이지, 잠시 걸려요)':'최신 공고를 수집합니다…');
+  try{
+    const r=await api('run_collect',full);
+    if(r&&r.ok){
+      const d=r.data; await boot(false);
+      if(d.failed_pages>0){
+        setRadi('error'); $('#live-dot').className='dot err';
+        toast(`일부 페이지 수집 실패 ${d.failed_pages}p — 잠시 후 재시도 권장`,'warn');
+        setTimeout(()=>setRadi(''),5000);
+      }else{
+        setRadi('happy');
+        toast(`수집 완료 · 신규 ${d.new}건 / 방사선 관련 ${d.relevant}건`);
+        if(d.unavailable_pages>0) toast(`참고: API 미제공 ${d.unavailable_pages}p (정부 totalCount 과대 — 정상)`);
+        setTimeout(()=>setRadi(''),2600);
+      }
+    }else{
+      setRadi('error'); $('#live-dot').className='dot err';
+      const et=r&&r.error_type;
+      const pre=et==='auth'?'인증 오류(서비스키 확인): ':et==='config'?'설정 오류: ':et==='network'?'네트워크 오류: ':'수집 실패: ';
+      toast(pre+((r&&r.error)||'알 수 없음'),'err'); setTimeout(()=>setRadi(''),5000);
+    }
+  }catch(e){ setRadi('error'); $('#live-dot').className='dot err'; toast('수집 오류: '+e,'err'); setTimeout(()=>setRadi(''),5000); }
+  finally{
+    btns.forEach(b=>{b.classList.remove('loading');b.disabled=false;});
+    document.querySelectorAll('.btn .lbl[data-progress]').forEach(l=>l.removeAttribute('data-progress'));
+    const l1=$('#btn-collect').querySelector('.lbl'); if(l1)l1.textContent='공고 수집';
+    const l2=$('#btn-collect2').querySelector('.lbl'); if(l2)l2.textContent='최신 수집';
+    const lf=$('#btn-full').querySelector('.lbl'); if(lf)lf.textContent='전체 백필';
+    setTimeout(()=>{$('#live-dot').className='dot idle'; $('#live-txt').textContent='대기';},1200);
+    _busy=false;
+  }
+}
+
+/* ====== 부팅/로드 ====== */
+async function boot(first){
+  const o=await api('get_overview'); if(o&&o.ok){S.overview=o.data; renderDashboard(); renderSettings();}
+  const rel=await api('list_announcements',true,"",null,300); if(rel&&rel.ok){S.rel=rel.data; applyRelFilters();}
+  const all=await api('list_announcements',false,"",null,300); if(all&&all.ok){S.all=all.data;}
+  const st=await api('get_settings'); if(st&&st.ok){S.settings=st.data; renderSettings();}
+  $('#foot-time').textContent=new Date().toLocaleString('ko-KR',{hour12:false}).slice(5);
+  if(first) toast('레이더 가동 — 라디가 준비됐어요 🛰️');
+}
+
+/* ====== 네비/검색/이벤트 ====== */
+const TITLES={dashboard:['대시보드','방사선·원자력 사업기회 관제'],relevant:['방사선 공고','관련도 기준 선별'],all:['전체 공고','과기정통부 사업공고 전체'],settings:['설정','키워드·수집 관리']};
+$('#nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;
+  $$('#nav button').forEach(x=>{const on=x===b;x.classList.toggle('on',on);on?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current');});
+  $$('.view').forEach(s=>s.classList.toggle('on',s.dataset.view===v));
+  $('#top-title').textContent=TITLES[v][0]; $('#top-sub').textContent=TITLES[v][1];
+  if(v==='all') renderAll();
+};
+function renderAll(items){
+  const total=S.overview?S.overview.stats.total:S.all.length;
+  const list=items||S.all;
+  $('#all-note').innerHTML = items!=null
+    ? `검색 결과 <b>${list.length}</b>건`
+    : `전체 <b>${(total||0).toLocaleString()}</b>건 중 최근 <b>${list.length}</b>건 표시 — 검색하면 전체에서 조회`;
+  renderList($('#all-list'),list,'search');
+}
+function wireSearch(input,getData,target){
+  $(input).addEventListener('input',e=>{const q=e.target.value.trim();const d=getData().filter(a=>!q||a.subject.includes(q));renderList($(target),d,'search');});
+}
+/* ── 관련탭 통합 필터: 상태 × 소스 × 계층 × 검색 동시 적용 ── */
+let relF={state:'',source:'',tier:''};
+function applyRelFilters(){
+  const q=(($('#search-rel')||{}).value||'').trim();
+  let d=S.rel||[];
+  if(relF.state)  d=d.filter(a=>a.state===relF.state);
+  if(relF.source) d=d.filter(a=>a.source===relF.source);
+  if(relF.tier)   d=d.filter(a=>tierOf(a)===relF.tier);
+  if(q)           d=d.filter(a=>a.subject.includes(q));
+  const note=$('#rel-note');
+  if(note) note.innerHTML=`방사선 공고 <b>${d.length}</b>건`+((relF.state||relF.source||relF.tier||q)?' <span style="color:var(--radar)">· 필터 적용</span>':'');
+  renderList($('#rel-list'),d,'search');
+}
+function wireChips(gid,key){const g=$(gid); if(!g)return;
+  g.onclick=e=>{const b=e.target.closest('button'); if(!b)return;
+    $$(gid+' button').forEach(x=>{const on=x===b; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on?'true':'false');});
+    relF[key]=b.dataset.v||''; applyRelFilters();};}
+wireChips('#state-rel','state'); wireChips('#source-rel','source'); wireChips('#tier-rel','tier');
+$('#search-rel').addEventListener('input',applyRelFilters);
+let _allSearchT=null;
+$('#search-all').addEventListener('input',e=>{
+  const q=e.target.value.trim(); clearTimeout(_allSearchT);
+  _allSearchT=setTimeout(async()=>{
+    if(!q){ renderAll(); return; }
+    const r=await api('list_announcements',false,q,null,300);
+    if(r&&r.ok) renderAll(r.data);
+  },320);
+});
+/* (상태칩 핸들러는 위 wireChips('#state-rel','state')로 통합) */
+$('#btn-collect').onclick=()=>doCollect(false);
+$('#btn-collect2').onclick=()=>doCollect(false);
+$('#btn-full').onclick=()=>doCollect(true);
+$('#btn-rescore').onclick=async()=>{
+  if(_busy)return; _busy=true;
+  const btns=[$('#btn-collect'),$('#btn-collect2'),$('#btn-full'),$('#btn-rescore')].filter(Boolean);
+  btns.forEach(b=>{b.classList.add('loading');b.disabled=true;});
+  toast('관련도 재계산 중…');
+  try{ const r=await api('rescore'); if(r&&r.ok){await boot(false);toast('재계산 완료 · 관련 '+r.data.stats.relevant+'건');} else toast('재계산 실패','err'); }
+  catch(e){ toast('재계산 오류: '+e,'err'); }
+  finally{ btns.forEach(b=>{b.classList.remove('loading');b.disabled=false;}); _busy=false; }
+};
+
+boot(true);
+</script>
+</body>
+</html>
