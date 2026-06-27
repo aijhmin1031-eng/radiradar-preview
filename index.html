@@ -270,6 +270,8 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .rf{display:flex; gap:10px; padding:6px 0; border-top:1px dashed var(--line); font-size:13px}
 .rf-k{flex:none; width:82px; color:var(--muted); font-weight:600; font-size:12px}
 .rf-v{color:var(--ink); font-weight:600; word-break:keep-all}
+.dday{font-size:10px; font-weight:800; background:var(--radar); color:#fff; border-radius:5px; padding:1px 6px; white-space:nowrap}
+.dday.past{background:var(--line2); color:var(--muted)}
 .rf-sum{padding-bottom:8px; font-size:13px; line-height:1.55}
 .rf-sum .rf-k{display:block; margin-bottom:4px; width:auto}
 .checklist{margin-top:12px; border-top:1px solid var(--line); padding-top:11px}
@@ -523,9 +525,12 @@ const MOCKLIST=[
 const MOCKEXTRA=[{id:"x1",subject:"2026년 ICT 중소기업 정보보호 지원 사업 수요기업 모집 공고",press_dt:"2026-06-26",dept_name:"정보보호산업과",relevance:0,matched:[],state:"new",source:"msit",view_url:_MV+"3186700",files:[]}];
 /* 미리보기용 — 공고문 자동추출 샘플(실제 앱은 첨부 hwpx/odt/pdf를 라이브 파싱). NTIS(n*)는 첨부 없음. */
 const MOCKDETAIL={
- m1:{ok:true,source_ext:"hwpx",budget:"총 30억원 내외 · 과제당 5억원(2년)",target:"3개 내외",apply_period:"2026.3.18.(수) ~ 4.10.(금)",purpose:"산업 안전·신뢰성 확보를 위한 비파괴검사(RT·CT) 핵심기술 고도화 및 현장적용 기술 개발",qualification:"「기초연구진흥 및 기술개발지원에 관한 법률」 제14조에서 정하는 기관 및 단체"},
- m2:{ok:true,source_ext:"hwpx",budget:"’25년~’29년 / 총 165억원 내외(’25년 10억원) · 과제당 8.5억원(4년)",target:"10개 내외",apply_period:"2025.2.17.(월) ~ 3.5.(수)",purpose:"방사선 이용기술이 제한적으로 적용되던 고부가 미래기술 분야(혁신 신소재·의료·우주·환경·반도체)에서 게임체인저가 될 방사선혁신 기반기술 개발",qualification:"「국가연구개발혁신법」 제2조제3호 및 동법 시행령 제2조에서 정하는 기관 및 단체"},
- m3:{ok:true,source_ext:"hwpx",budget:"’25년~’29년 / 총 190억원 내외(’25년 30억원)",target:"1개 내외",apply_period:"2025.2.17.(월) ~ 3.5.(수)",purpose:"국가 주요 산업 경쟁력 강화를 위한 방사선(전자선·양성자/중성자·감마선) 대체불가 원천기술 개발",qualification:"「국가연구개발혁신법」 제2조제3호에서 정하는 기관 및 단체"}
+ m1:{ok:true,source_ext:"hwpx",budget:"총 30억원 내외 · 과제당 5억원(2년)",target:"3개 내외",apply_period:"2026.6.20.(금) ~ 7.18.(금)",deadline:"2026-07-18",period:"’26.7.~’28.6.",agency:"한국연구재단",purpose:"산업 안전·신뢰성 확보를 위한 비파괴검사(RT·CT) 핵심기술 고도화 및 현장적용 기술 개발",qualification:"「기초연구진흥 및 기술개발지원에 관한 법률」 제14조에서 정하는 기관 및 단체"},
+ m2:{ok:true,source_ext:"hwpx",budget:"’25년~’29년 / 총 165억원 내외(’25년 10억원) · 과제당 8.5억원(4년)",target:"10개 내외",apply_period:"2025.2.17.(월) ~ 3.5.(수)",deadline:"2025-03-05",period:"’25.4.~’28.12.",agency:"한국연구재단",purpose:"방사선 이용기술이 제한적으로 적용되던 고부가 미래기술 분야(혁신 신소재·의료·우주·환경·반도체)에서 게임체인저가 될 방사선혁신 기반기술 개발",qualification:"「국가연구개발혁신법」 제2조제3호 및 동법 시행령 제2조에서 정하는 기관 및 단체"},
+ m3:{ok:true,source_ext:"hwpx",budget:"’25년~’29년 / 총 190억원 내외(’25년 30억원)",target:"1개 내외",apply_period:"2025.2.17.(월) ~ 3.5.(수)",deadline:"2025-03-05",period:"’25.4.~’28.12.",agency:"한국연구재단",purpose:"국가 주요 산업 경쟁력 강화를 위한 방사선(전자선·양성자/중성자·감마선) 대체불가 원천기술 개발",qualification:"「국가연구개발혁신법」 제2조제3호에서 정하는 기관 및 단체"},
+ n1:{ok:true,source_ext:"ntis",budget:"0.9 억원",apply_period:"2022.02.23 ~ 2022.03.24",deadline:"2022-03-24 18:00",program:"방사성동위원소산업육성및고도화기술지원사업(R&D)",inquiry:"02-3490-7108"},
+ n2:{ok:true,source_ext:"ntis",budget:"1.2 억원",apply_period:"2023.03.10 ~ 2023.04.10",deadline:"2023-04-10 18:00",program:"방사성동위원소산업육성및고도화기술지원사업(R&D)",inquiry:"02-3490-7108"},
+ n3:{ok:true,source_ext:"ntis",budget:"3.0 억원",apply_period:"2022.04.01 ~ 2022.05.09",deadline:"2022-05-09 18:00",program:"방사선이용 희귀난치질환 대응 핵심기술개발사업",inquiry:"02-3490-7100"}
 };
 
 let BRIDGE=null;
@@ -660,24 +665,41 @@ function checklistHTML(a,d){
   const li=items.map(it=>`<li><span class="ck-box">□</span><span class="ck-t"><b>${esc(it[0])}</b> <span>${esc(it[1])}</span></span></li>`).join('');
   return `<div class="checklist"><div class="ck-h">✅ 신청 준비 체크리스트</div><ul>${li}</ul></div>`;
 }
+function ddayText(dl){
+  if(!dl) return '';
+  const d=new Date(dl.slice(0,10)+'T23:59:59'), now=new Date();
+  const days=Math.ceil((d-now)/86400000);
+  if(isNaN(days)) return '';
+  if(days<0) return '마감';
+  if(days===0) return 'D-DAY';
+  return 'D-'+days;
+}
 function renderRich(d,a){
   const el=$('#detail-rich'); if(!el) return;
   if(!d||!d.ok){
     el.className='rich-none';
-    el.innerHTML=(d&&d.reason==='no_files')
-      ? '📄 첨부 공고문이 없어 자동추출 불가 — 아래 ‘공고 원문 열기’에서 확인하세요.'
-      : '📄 공고문에서 상세를 추출하지 못했습니다 — ‘공고 원문 열기’에서 확인하세요.';
+    el.innerHTML=(d&&(d.reason==='no_files'||d.reason==='fetch_fail'))
+      ? '📄 첨부·상세가 없어 자동추출 불가 — 아래 ‘공고 원문 열기’에서 확인하세요.'
+      : '📄 공고에서 상세를 추출하지 못했습니다 — ‘공고 원문 열기’에서 확인하세요.';
     return;
   }
   el.className='rich';
   const rows=[];
-  if(d.budget) rows.push(['💰 사업규모',d.budget]);
-  if(d.target) rows.push(['🎯 선정규모',d.target]);
-  if(d.apply_period) rows.push(['📅 신청기간',d.apply_period]);
-  if(d.qualification) rows.push(['🏢 신청자격',d.qualification]);
-  const fields=rows.map(r=>`<div class="rf"><span class="rf-k">${r[0]}</span><span class="rf-v">${esc(r[1])}</span></div>`).join('');
+  if(d.program) rows.push(['📋 사업명', esc(d.program)]);
+  if(d.budget) rows.push(['💰 사업규모', esc(d.budget)]);
+  if(d.target) rows.push(['🎯 선정규모', esc(d.target)]);
+  if(d.period) rows.push(['🗓️ 사업기간', esc(d.period)]);
+  if(d.apply_period||d.deadline){
+    const dd=ddayText(d.deadline);
+    const badge=dd?` <span class="dday${dd==='마감'?' past':''}">${dd}</span>`:'';
+    rows.push(['📅 신청기간', esc(d.apply_period||d.deadline)+badge]);
+  }
+  if(d.agency) rows.push(['🏛️ 전문기관', esc(d.agency)]);
+  if(d.qualification) rows.push(['🏢 신청자격', esc(d.qualification)]);
+  if(d.inquiry) rows.push(['☎️ 문의처', esc(d.inquiry)]);
+  const fields=rows.map(r=>`<div class="rf"><span class="rf-k">${r[0]}</span><span class="rf-v">${r[1]}</span></div>`).join('');
   const sum=d.purpose?`<div class="rf-sum"><span class="rf-k">📌 주요내용</span><div>${esc(d.purpose)}</div></div>`:'';
-  el.innerHTML=`<div class="rich-h">📄 공고문 상세 <span class="rich-src">(${esc(d.source_ext||'첨부')} 자동추출)</span></div>${sum}${fields}${checklistHTML(a,d)}`;
+  el.innerHTML=`<div class="rich-h">📄 공고 상세 <span class="rich-src">(${esc(d.source_ext||'첨부')} 자동추출)</span></div>${sum}${fields}${checklistHTML(a,d)}`;
   el.querySelectorAll('.checklist li').forEach(li=>li.onclick=()=>li.classList.toggle('done'));
 }
 let _detailId=null;
