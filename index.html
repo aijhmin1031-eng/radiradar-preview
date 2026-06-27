@@ -252,6 +252,16 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .detail-meta{display:grid; grid-template-columns:auto 1fr; gap:8px 16px; font-size:13px; margin-bottom:18px}
 .detail-meta .k{color:var(--muted); font-family:var(--mono); font-size:12px}
 .detail-meta .v{color:var(--ink)}
+/* 자동 분석 박스 */
+.analysis{background:var(--panel2); border:1px solid var(--line); border-left:4px solid var(--radar); border-radius:10px; padding:14px 16px; margin-bottom:16px}
+.analysis .an-h{font-size:12px; font-weight:800; color:var(--radar); margin-bottom:11px; letter-spacing:.02em}
+.an-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px 18px; margin-bottom:11px}
+.an-grid>div{display:flex; flex-direction:column; gap:3px}
+.an-k{font-size:11px; color:var(--muted); font-weight:600}
+.an-v{font-size:13.5px; color:var(--ink); font-weight:700; display:flex; align-items:center; gap:6px}
+.an-basis{font-size:12px; color:var(--muted); line-height:1.55; border-top:1px dashed var(--line); padding-top:10px}
+.an-basis b{color:var(--radar); font-weight:700}
+@media (max-width:600px){.an-grid{grid-template-columns:1fr}}
 .files{display:flex; flex-direction:column; gap:7px; margin:14px 0}
 .file{display:flex; align-items:center; gap:10px; background:var(--raise); border:1px solid var(--line); border-radius:9px; padding:10px 13px; font-size:12.5px; cursor:pointer; transition:.15s}
 .file:hover{border-color:var(--radar)} .file .fi{color:var(--beacon)}
@@ -473,22 +483,25 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 <script>
 /* ====== 백엔드 브리지 (pywebview) + 브라우저 미리보기 목업 폴백 ====== */
 const MOCK = {
-  get_overview: ()=>({ok:true,data:{stats:{total:4020,relevant:174,new:174,latest_press_dt:"2026-06-26"},recent:MOCKLIST.slice(0,8)}}),
+  get_overview: ()=>({ok:true,data:{stats:{total:4020,relevant:106,new:8,latest_press_dt:"2026-06-26"},recent:MOCKLIST.slice(0,8)}}),
   list_announcements: (ro,search)=>{const all=ro?MOCKLIST:MOCKLIST.concat(MOCKEXTRA);const q=(search||'').trim();return {ok:true,data:q?all.filter(a=>a.subject.includes(q)):all};},
   run_collect: ()=>new Promise(r=>setTimeout(()=>r({ok:true,data:{fetched:4020,new:3,updated:4017,relevant:125,failed_pages:0,unavailable_pages:15,incomplete:false,expected_total:4169,db_total:4020,stats:{total:4023,relevant:126,new:3,latest_press_dt:"2026-06-27"}}}),1500)),
   rescore: ()=>({ok:true,data:{rescored:4020,stats:{total:4020,relevant:174,new:0,latest_press_dt:"2026-06-26"}}}),
   get_settings: ()=>({ok:true,data:{strong:["방사선","방사능","방사성","원자력","동위원소","핵의학","방사광","양성자","중성자","중입자","가속기","비파괴검사","선량","피폭","차폐","RI"],medium:["원전","원자로","핵연료","방사선안전","비파괴","의료영상"],threshold:3}}),
   set_state:()=>({ok:true}), open_url:(u)=>{window.open(u,"_blank");return{ok:true}}
 };
+/* 미리보기용 샘플 — 실제 공고·진짜 링크(원문 열기 동작). 본 앱은 API 실데이터 사용. */
+const _MV="https://www.msit.go.kr/bbs/view.do?sCode=user&mId=311&mPid=121&bbsSeqNo=100&nttSeqNo=";
+const _NV="https://www.ntis.go.kr/rndgate/eg/un/ra/view.do?roRndUid=";
 const MOCKLIST=[
- {id:"m1",subject:"2026년 하반기 원자력정책연구사업 공고",press_dt:"2026-06-16",dept_name:"원자력정책과",relevance:3,matched:["원자력"],state:"new",source:"msit",manager_name:"김담당",manager_tel:"044-202-0000",view_url:"https://www.msit.go.kr",files:[{name:"공고문.hwpx",url:"#"}]},
- {id:"n1",subject:"양성자가속기성능향상선행RD사업 신규과제(정책지정)",press_dt:"2026-04-08",dept_name:"",relevance:6,matched:["양성자","가속기"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:"https://www.ntis.go.kr",files:[]},
- {id:"m2",subject:"2026년도 비파괴검사 기술역량 강화 사업 신규과제 재공모 공고",press_dt:"2026-03-18",dept_name:"원자력연구개발과",relevance:7,matched:["원자력","비파괴검사","비파괴"],state:"new",manager_name:"이담당",manager_tel:"044-202-0001",view_url:"https://www.msit.go.kr",files:[{name:"붙임.pdf",url:"#"}]},
- {id:"m3",subject:"2026년도 국가전략기술 핵심역량 확보를 위한 중성자 활용 기술 고도화사업 신규과제 공모",press_dt:"2026-02-11",dept_name:"원자력연구개발과",relevance:6,matched:["중성자","원자력(부서)"],state:"new",manager_name:"박담당",manager_tel:"044-202-0002",view_url:"https://www.msit.go.kr",files:[]},
- {id:"m4",subject:"2026년 가속기핵심기술개발사업 신규과제 선정결과 공고",press_dt:"2026-05-29",dept_name:"미래원자력기술과",relevance:3,matched:["가속기"],state:"read",manager_name:"최담당",manager_tel:"044-202-0003",view_url:"https://www.msit.go.kr",files:[]},
- {id:"m5",subject:"2025년도 미래 방사선 강점기술 고도화사업 신규과제 공모",press_dt:"2025-02-04",dept_name:"원자력연구개발과",relevance:6,matched:["방사선","원자력"],state:"saved",manager_name:"정담당",manager_tel:"044-202-0004",view_url:"https://www.msit.go.kr",files:[{name:"공모안내.hwpx",url:"#"}]}
+ {id:"m1",subject:"2026년도 비파괴검사 기술역량 강화 사업 신규과제 재공모 공고",press_dt:"2026-03-18",dept_name:"원자력연구개발과",relevance:3,matched:["비파괴검사"],state:"new",source:"msit",manager_name:"이담당",manager_tel:"044-202-0001",view_url:_MV+"3186582",files:[{name:"비파괴검사 기술역량 강화 사업 공고문.hwp",url:_MV+"3186582"}]},
+ {id:"m2",subject:"2025년도 방사선혁신이용기반기술개발사업 신규과제 공모",press_dt:"2025-02-04",dept_name:"원자력연구개발과",relevance:3,matched:["방사선"],state:"new",source:"msit",manager_name:"정담당",manager_tel:"044-202-0004",view_url:_MV+"3179243",files:[{name:"방사선혁신이용기반기술개발사업 공고문.hwp",url:_MV+"3179243"}]},
+ {id:"m3",subject:"2025년도 미래 방사선 강점기술 고도화사업 신규과제 공모",press_dt:"2025-02-04",dept_name:"원자력연구개발과",relevance:3,matched:["방사선"],state:"saved",source:"msit",manager_name:"박담당",manager_tel:"044-202-0002",view_url:_MV+"3179236",files:[{name:"미래 방사선 강점기술 고도화사업 공고문.hwp",url:_MV+"3179236"}]},
+ {id:"n1",subject:"2022년 방사성동위원소 이용 고부가 사업화 지원 신규과제 공고",press_dt:"2022-06-14",dept_name:"",relevance:3,matched:["방사성동위원소"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1071081",files:[]},
+ {id:"n2",subject:"2023년 방사성동위원소 이용 고부가 사업화 지원 신규과제 공고(재공고)",press_dt:"2023-04-10",dept_name:"",relevance:3,matched:["방사성동위원소"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1134844",files:[]},
+ {id:"n3",subject:"2022년도 방사선 이용 희귀난치질환 대응 핵심기술개발사업(치료용 방사성동위원소 이용 의약품 제조) 신규과제 공고",press_dt:"2022-05-09",dept_name:"",relevance:6,matched:["방사성동위원소","방사선"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1087634",files:[]}
 ];
-const MOCKEXTRA=[{id:"x1",subject:"2026년 ICT 중소기업 정보보호 지원 사업 수요기업 모집 공고",press_dt:"2026-06-26",dept_name:"정보보호산업과",relevance:0,matched:[],state:"new",view_url:"#",files:[]}];
+const MOCKEXTRA=[{id:"x1",subject:"2026년 ICT 중소기업 정보보호 지원 사업 수요기업 모집 공고",press_dt:"2026-06-26",dept_name:"정보보호산업과",relevance:0,matched:[],state:"new",source:"msit",view_url:_MV+"3186700",files:[]}];
 
 let BRIDGE=null;
 function api(method,...args){
@@ -576,21 +589,68 @@ function renderSettings(){
 }
 
 /* ====== 상세 ====== */
+/* ── 규칙기반 공고 분석 ── */
+function bizType(s){s=s||'';
+  if(/선정\s*결과|결과\s*공고|선정결과/.test(s)) return '선정결과 공고';
+  if(/기술개발|연구개발|R&?D|핵심기술|고도화|실증/.test(s)) return 'R&D 기술개발';
+  if(/지원\s*사업/.test(s)) return '지원사업';
+  if(/공모|모집|접수/.test(s)) return '공모·모집';
+  if(/용역/.test(s)) return '용역';
+  if(/실태조사|현황조사|조사/.test(s)) return '조사·연구';
+  return '사업공고';
+}
+const _DOMAINS=[
+  ['의료', /핵의학|방사선치료|치료기|테라노스틱스|PET|SPECT|중입자|양성자치료|BNCT|방사성의약품|진단영상/],
+  ['산업·검사', /비파괴|투과검사|NDT|계측|두께|밀도|검층/],
+  ['소재·전자', /전자선|전자빔|EB|조사처리|멸균|가교|그라프트|분리막|이차전지|표면개질/],
+  ['에너지', /원전|원자로|SMR|핵연료|사용후핵연료/],
+  ['안전·관리', /안전관리|작업종사자|선량|피폭|폐기물|차폐/],
+  ['생산·소재', /동위원소|핵종|사이클로트론|가속기|방사광|검출기|디텍터|선량계/],
+];
+function domainOf(a){
+  const ks=(a.matched||[]).join('|')+'|'+(a.subject||'');
+  const hit=[...new Set(_DOMAINS.filter(d=>d[1].test(ks)).map(d=>d[0]))];
+  return hit.length? hit.slice(0,2).join(' · ') : '방사선 일반';
+}
+function ageText(pd){
+  if(!pd) return '';
+  const d=new Date(pd+'T00:00:00'), now=new Date();
+  const days=Math.floor((now-d)/86400000);
+  if(isNaN(days)) return '';
+  if(days<0) return '예정';
+  if(days===0) return '오늘 게시';
+  if(days<=7) return days+'일 전 게시 · 신규';
+  if(days<=31) return days+'일 전 게시';
+  return '약 '+Math.floor(days/30)+'개월 전 게시';
+}
 async function openDetail(id){
   let a=[...S.rel,...S.all,...(S.overview?S.overview.recent:[])].find(x=>x.id===id);
   if(!a){const r=await api('get_detail',id); if(r&&r.ok)a=r.data;}
   if(!a)return;
   const files=(a.files||[]).map(f=>`<div class="file" data-url="${esc(f.url)}"><span class="fi">▤</span> ${esc(f.name||f.url)}</div>`).join('');
   _lastFocused=document.activeElement;
+  const tier=tierOf(a), tlab={mfg:'공급·제조',use:'이용·응용',base:'기반·안전'}[tier];
+  const an_age=ageText(a.press_dt);
   $('#sheet').innerHTML=`<button class="x" data-close aria-label="닫기">✕</button>
     <h3 id="sheet-title">${esc(a.subject)}</h3>
+    <div class="analysis">
+      <div class="an-h">📊 자동 분석 (규칙기반)</div>
+      <div class="an-grid">
+        <div><span class="an-k">사업 유형</span><span class="an-v">${bizType(a.subject)}</span></div>
+        <div><span class="an-k">산업 계층</span><span class="an-v"><span class="tier-tag t-${tier}">${tlab}</span></span></div>
+        <div><span class="an-k">응용 분야</span><span class="an-v">${domainOf(a)}</span></div>
+        <div><span class="an-k">관련도</span><span class="an-v" style="color:var(--radar)">${esc(String(a.relevance))}점 · 키워드 ${(a.matched||[]).length}개</span></div>
+        ${an_age?`<div><span class="an-k">게시 경과</span><span class="an-v">${an_age}</span></div>`:''}
+        <div><span class="an-k">출처</span><span class="an-v">${esc(SRC_LABEL[a.source]||a.source||'—')}</span></div>
+      </div>
+      <div class="an-basis">관련 근거 : ${(a.matched||[]).length?(a.matched||[]).map(k=>`<b>${esc(k)}</b>`).join(', '):'—'} <span style="color:var(--dim)">— 방사선 산업 분류체계 일치</span></div>
+    </div>
     <div class="detail-meta">
-      <div class="k">관련도</div><div class="v" style="color:var(--radar);font-weight:700">${esc(String(a.relevance))} 점 ${(a.matched||[]).length?'· '+(a.matched||[]).map(esc).join(', '):''}</div>
       <div class="k">게시일</div><div class="v">${esc(a.press_dt||'—')}</div>
       <div class="k">담당부서</div><div class="v">${esc(a.dept_name||'—')}</div>
       <div class="k">담당자</div><div class="v">${esc(a.manager_name||'—')} ${a.manager_tel?'· '+esc(a.manager_tel):''}</div>
     </div>
-    ${files?`<div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:6px">첨부파일</div><div class="files">${files}</div>`:''}
+    ${files?`<div style="font-size:12px;color:var(--muted);margin-bottom:7px">📎 첨부파일 <span style="color:var(--dim)">— 사업 상세내용은 공고문에 있습니다</span></div><div class="files">${files}</div>`:'<div style="font-size:12.5px;color:var(--dim);margin-bottom:12px">첨부 없음 — 아래 ‘공고 원문 열기’로 사업 상세내용을 확인하세요.</div>'}
     <div class="actions">
       <button class="btn primary" data-open="${esc(a.view_url||'')}">공고 원문 열기 ↗</button>
       <button class="btn" data-state="saved">저장</button>
