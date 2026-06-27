@@ -182,6 +182,8 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .chiptog button.on{color:var(--radar); border-color:var(--radar-d); background:rgba(201,100,66,.08)}
 .chiplbl{font-size:10px; font-weight:700; color:var(--dim); letter-spacing:.08em; align-self:center; white-space:nowrap}
 .fgroup{display:flex; align-items:center; gap:7px}
+.sortsel{font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:8px 10px; cursor:pointer; outline:none}
+.sortsel:focus{border-color:var(--radar-d)}
 /* 계층별 색: 공급제조=호박, 이용응용=틸, 기반안전=보라 */
 #tier-rel button[data-v="mfg"].on{color:var(--tier-mfg); border-color:var(--beacon-d); background:rgba(255,180,84,.10)}
 #tier-rel button[data-v="use"].on{color:var(--tier-use); border-color:var(--radar-d); background:rgba(201,100,66,.10)}
@@ -453,6 +455,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
     <section class="view" data-view="relevant">
       <div class="toolbar">
         <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-rel" aria-label="방사선 공고 검색" placeholder="제목으로 검색…"></div>
+        <select id="sort-rel" class="sortsel" aria-label="정렬 기준"><option value="new">최신순</option><option value="rel">관련도순</option><option value="old">오래된순</option></select>
         <div class="fgroup"><span class="chiplbl">상태</span>
           <div class="chiptog" id="state-rel" role="group" aria-label="상태 필터">
             <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="new" aria-pressed="false">신규</button><button data-v="saved" aria-pressed="false">저장</button>
@@ -935,6 +938,10 @@ function applyRelFilters(){
   if(relF.source) d=d.filter(a=>a.source===relF.source);
   if(relF.tier)   d=d.filter(a=>tierOf(a)===relF.tier);
   if(q)           d=d.filter(a=>a.subject.includes(q));
+  const sv=(($('#sort-rel')||{}).value)||'new';
+  d=d.slice().sort((a,b)=> sv==='rel' ? ((b.relevance||0)-(a.relevance||0))
+    : sv==='old' ? ((a.press_dt||'')<(b.press_dt||'')?-1:1)
+    : ((a.press_dt||'')>(b.press_dt||'')?-1:1));
   const note=$('#rel-note');
   if(note) note.innerHTML=`방사선 공고 <b>${d.length}</b>건`+((relF.state||relF.source||relF.tier||q)?' <span style="color:var(--radar)">· 필터 적용</span>':'');
   renderList($('#rel-list'),d,'search');
@@ -945,6 +952,7 @@ function wireChips(gid,key){const g=$(gid); if(!g)return;
     relF[key]=b.dataset.v||''; applyRelFilters();};}
 wireChips('#state-rel','state'); wireChips('#source-rel','source'); wireChips('#tier-rel','tier');
 $('#search-rel').addEventListener('input',applyRelFilters);
+$('#sort-rel')&&($('#sort-rel').onchange=applyRelFilters);
 let _allSearchT=null;
 $('#search-all').addEventListener('input',e=>{
   const q=e.target.value.trim(); clearTimeout(_allSearchT);
