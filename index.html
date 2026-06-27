@@ -180,7 +180,8 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .chiptog{display:flex; gap:6px}
 .chiptog button{font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line); padding:8px 12px; border-radius:9px; cursor:pointer; transition:.15s}
 .chiptog button.on{color:var(--radar); border-color:var(--radar-d); background:rgba(201,100,66,.08)}
-.chiplbl{font-size:10px; font-weight:700; color:var(--dim); letter-spacing:.08em; align-self:center; margin-left:6px}
+.chiplbl{font-size:10px; font-weight:700; color:var(--dim); letter-spacing:.08em; align-self:center; white-space:nowrap}
+.fgroup{display:flex; align-items:center; gap:7px}
 /* 계층별 색: 공급제조=호박, 이용응용=틸, 기반안전=보라 */
 #tier-rel button[data-v="mfg"].on{color:var(--tier-mfg); border-color:var(--beacon-d); background:rgba(255,180,84,.10)}
 #tier-rel button[data-v="use"].on{color:var(--tier-use); border-color:var(--radar-d); background:rgba(201,100,66,.10)}
@@ -278,7 +279,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
         justify-content:center; border-radius:10px}
   .nav button span:not(.badge){display:inline; font-weight:600}
   .nav button.on{box-shadow:none; background:rgba(201,100,66,.10)}
-  .nav .badge{display:none}
+  .nav .badge{display:none !important}
   .topbar{padding:11px 15px} .topbar h1{font-size:15px} .topbar .sub{display:none}
   .topbar .status .kv{display:none}
   .view{padding:16px 13px 30px}
@@ -288,7 +289,11 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
   .speech h2{font-size:18px} .speech p{font-size:12.5px}
   .hero-card{padding:20px}
   .card{padding:13px 14px; gap:11px} .card .title{font-size:13.5px}
-  .chiplbl{margin-left:2px}
+  .radar-card{display:none}                 /* 레이더 장식 → 모바일 숨김(콘텐츠 우선) */
+  .toolbar{flex-direction:column; align-items:stretch; gap:9px}
+  .fgroup{flex-wrap:wrap; gap:6px}
+  .chiplbl{min-width:28px}
+  .signals{gap:7px; margin-top:14px; padding-top:12px} .signals .sig{font-size:10.5px; padding:5px 9px}
   .modal{padding:14px} .modal .sheet{padding:22px 18px}
 }
 /* 마스코트 오류 상태 */
@@ -406,18 +411,18 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
     <section class="view" data-view="relevant">
       <div class="toolbar">
         <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-rel" aria-label="방사선 공고 검색" placeholder="제목으로 검색…"></div>
-        <span class="chiplbl">상태</span>
-        <div class="chiptog" id="state-rel" role="group" aria-label="상태 필터">
-          <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="new" aria-pressed="false">신규</button><button data-v="saved" aria-pressed="false">저장</button>
-        </div>
-        <span class="chiplbl">소스</span>
-        <div class="chiptog" id="source-rel" role="group" aria-label="소스 필터">
-          <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="msit" aria-pressed="false">과기정통부</button><button data-v="ntis" aria-pressed="false">NTIS</button>
-        </div>
-        <span class="chiplbl">계층</span>
-        <div class="chiptog" id="tier-rel" role="group" aria-label="계층 필터">
-          <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="mfg" aria-pressed="false">공급·제조</button><button data-v="use" aria-pressed="false">이용·응용</button><button data-v="base" aria-pressed="false">기반·안전</button>
-        </div>
+        <div class="fgroup"><span class="chiplbl">상태</span>
+          <div class="chiptog" id="state-rel" role="group" aria-label="상태 필터">
+            <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="new" aria-pressed="false">신규</button><button data-v="saved" aria-pressed="false">저장</button>
+          </div></div>
+        <div class="fgroup"><span class="chiplbl">소스</span>
+          <div class="chiptog" id="source-rel" role="group" aria-label="소스 필터">
+            <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="msit" aria-pressed="false">과기정통부</button><button data-v="ntis" aria-pressed="false">NTIS</button>
+          </div></div>
+        <div class="fgroup"><span class="chiplbl">계층</span>
+          <div class="chiptog" id="tier-rel" role="group" aria-label="계층 필터">
+            <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="mfg" aria-pressed="false">공급·제조</button><button data-v="use" aria-pressed="false">이용·응용</button><button data-v="base" aria-pressed="false">기반·안전</button>
+          </div></div>
       </div>
       <div class="list-note" id="rel-note"></div>
       <div class="list" id="rel-list"></div>
