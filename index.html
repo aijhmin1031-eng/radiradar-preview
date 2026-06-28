@@ -257,6 +257,9 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .kw-add input{flex:1; min-width:150px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:13px; color:var(--ink); outline:none}
 .kw-add input:focus{border-color:var(--radar-d)}
 .kw-add select{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; color:var(--muted); cursor:pointer}
+.key-status{font-size:13px; padding:9px 12px; border-radius:8px; background:var(--raise); border:1px solid var(--line); color:var(--muted)}
+.key-status.ok{background:rgba(47,107,76,.10); border-color:var(--good); color:var(--ink)}
+.key-status.none{background:rgba(201,100,66,.08); border-color:var(--radar-d); color:var(--ink)}
 
 /* ===== 상세 모달 ===== */
 .modal{position:fixed; inset:0; z-index:40; display:none; align-items:center; justify-content:center; padding:30px}
@@ -532,6 +535,18 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
     <!-- 설정 -->
     <section class="view" data-view="settings">
       <div class="set-grid">
+        <div class="panel" id="panel-conn">
+          <h4>연동 · 서비스키</h4>
+          <p class="desc">공고 수집에는 <b>data.go.kr(공공데이터포털) 서비스키</b>가 필요합니다. 입력하면 <b>암호화(Windows DPAPI)</b>되어 이 PC에만 저장돼요(평문 노출 없음).</p>
+          <div id="key-status" class="key-status">상태 확인 중…</div>
+          <div class="kw-add" style="margin-top:10px">
+            <input id="key-input" type="password" placeholder="data.go.kr 서비스키 붙여넣기" autocomplete="off" spellcheck="false">
+            <button class="btn" id="key-eye" type="button" title="표시/숨김" style="min-width:42px">👁</button>
+            <button class="btn primary" id="key-save"><span class="spin"></span><span class="lbl">저장</span></button>
+            <button class="btn" id="key-test"><span class="spin"></span><span class="lbl">연결 테스트</span></button>
+          </div>
+          <p class="desc" style="margin-top:8px"><a href="#" id="key-issue" style="color:var(--radar);font-weight:700">▸ 서비스키 발급 방법</a> — data.go.kr 가입 → ‘과기정통부 사업공고’ 활용신청 → 마이페이지에서 인증키 복사·붙여넣기</p>
+        </div>
         <div class="panel">
           <h4>방사선 관련도 키워드</h4>
           <p class="desc">공고 제목에서 아래 키워드를 찾아 관련도를 매깁니다. <b style="color:var(--radar)">STRONG</b>은 가중 3, <b style="color:var(--beacon)">MEDIUM</b>은 가중 1.</p>
@@ -597,6 +612,9 @@ const MOCK = {
   add_keyword:(term,w)=>{term=(term||'').trim();if(!term)return{ok:true};const u=_ukw(),b=w==='strong'?'strong':'medium';u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);if(!_KWDEF[b].includes(term))u[b].push(term);_setUkw(u);return{ok:true};},
   remove_keyword:(term)=>{const u=_ukw();u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);_setUkw(u);return{ok:true};},
   analyze_deadlines:()=>({ok:true,data:{processed:6,with_deadline:1}}),
+  get_key_status:()=>{const k=localStorage.getItem('_mockkey')||''; return {ok:true,data:{has_key:!!k, source:k?'secrets':'none', masked:k?k.slice(0,4)+'***'+k.slice(-4):'', dpapi:true}};},
+  set_service_key:(key)=>{localStorage.setItem('_mockkey',(key||'').trim()); return {ok:true,data:{saved:true}};},
+  test_connection:()=>{const k=localStorage.getItem('_mockkey')||''; return k?{ok:true,data:{fetched:100}}:{ok:false,error:'키 미설정',error_type:'auth'};},
   set_state:(id,st)=>{_setOv(id,{state:st});return{ok:true};},
   set_note:(id,note)=>{_setOv(id,{note:(note||'').trim()||null});return{ok:true};},
   set_track:(id,st)=>{_setOv(id,{track_status:st||null});return{ok:true};},
@@ -748,7 +766,7 @@ function renderSettings(){
   const s=S.overview?S.overview.stats:{};
   $('#set-stats').innerHTML=`전체 <b style="color:var(--ink)">${(s.total||0).toLocaleString()}</b>건 · 관련 <b style="color:var(--radar)">${s.relevant||0}</b>건 · 신규 <b style="color:var(--beacon)">${s.new||0}</b>건 · 최신 ${s.latest_press_dt||'—'}`;
 }
-async function reloadSettings(){ const r=await api('get_settings'); if(r&&r.ok){S.settings=r.data; renderSettings();} }
+async function reloadSettings(){ const r=await api('get_settings'); if(r&&r.ok){S.settings=r.data; renderSettings();} reloadKeyStatus(); }
 
 /* ====== 상세 ====== */
 /* ── 규칙기반 공고 분석 ── */
@@ -1002,6 +1020,7 @@ async function boot(first){
   const rel=await api('list_announcements',true,"",null,300); if(rel&&rel.ok){S.rel=rel.data; applyRelFilters();}
   const all=await api('list_announcements',false,"",null,300); if(all&&all.ok){S.all=all.data;}
   const st=await api('get_settings'); if(st&&st.ok){S.settings=st.data; renderSettings();}
+  reloadKeyStatus();   // 연동 키 상태
   loadTracked();   // 보관함 배지·데이터
   $('#foot-time').textContent=new Date().toLocaleString('ko-KR',{hour12:false}).slice(5);
   if(first) toast('레이더 가동 — 라디가 준비됐어요 🛰️');
@@ -1073,6 +1092,29 @@ async function doExport(scope){
 }
 $('#btn-export-trk').onclick=()=>doExport('tracked');
 $('#btn-export-rel').onclick=()=>doExport('relevant');
+async function reloadKeyStatus(){
+  const el=$('#key-status'); if(!el)return;
+  const r=await api('get_key_status');
+  if(r&&r.ok&&r.data){const d=r.data;
+    if(d.has_key){el.innerHTML='✅ 서비스키 설정됨 &nbsp;<b>'+esc(d.masked)+'</b> <span style="color:var(--muted)">· '+(d.source==='secrets'?'암호화 저장':'환경변수')+'</span>';el.className='key-status ok';}
+    else{el.innerHTML='⚠️ 서비스키 미설정 — 입력해야 공고를 수집할 수 있어요';el.className='key-status none';}
+  }else{el.textContent='상태 확인 불가';el.className='key-status';}
+}
+$('#key-eye')&&($('#key-eye').onclick=()=>{const i=$('#key-input');i.type=i.type==='password'?'text':'password';i.focus();});
+$('#key-save')&&($('#key-save').onclick=async()=>{
+  const i=$('#key-input'),k=(i.value||'').trim(); if(!k){i.focus();return;}
+  const b=$('#key-save');b.classList.add('loading');b.disabled=true;
+  const r=await api('set_service_key',k);b.classList.remove('loading');b.disabled=false;
+  if(r&&r.ok&&r.data&&r.data.saved){i.value='';toast('서비스키 저장됨 (암호화)');reloadKeyStatus();}
+  else toast('저장 실패','err');
+});
+$('#key-test')&&($('#key-test').onclick=async()=>{
+  const b=$('#key-test');b.classList.add('loading');b.disabled=true;toast('연결 테스트 중…');
+  const r=await api('test_connection');b.classList.remove('loading');b.disabled=false;
+  if(r&&r.ok)toast('✅ 연결 성공 — '+((r.data&&r.data.fetched)||0)+'건 응답');
+  else toast('❌ 연결 실패: '+((r&&r.error_type==='auth')?'키 인증 오류(키 확인)':((r&&r.error)||'알 수 없음')),'err');
+});
+$('#key-issue')&&($('#key-issue').onclick=(e)=>{e.preventDefault();api('open_url','https://www.data.go.kr');});
 $('#kw-add-btn')&&($('#kw-add-btn').onclick=async()=>{
   const inp=$('#kw-input'), term=(inp.value||'').trim(); if(!term){inp.focus();return;}
   const r=await api('add_keyword',term,$('#kw-weight').value);
