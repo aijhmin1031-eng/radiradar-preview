@@ -247,11 +247,16 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:22px; box-shadow:var(--shadow)}
 .panel h4{font-size:13.5px; font-weight:800; margin-bottom:5px}
 .panel .desc{font-size:12px; color:var(--muted); margin-bottom:14px; line-height:1.55}
-.kwbox{display:flex; gap:7px; flex-wrap:wrap}
+.kwbox{display:flex; gap:7px; flex-wrap:wrap; min-height:40px; padding:7px; border-radius:9px; border:1px dashed transparent; transition:background .15s, border-color .15s}
+.kwbox.drop{background:rgba(201,100,66,.07); border-color:var(--radar-d)}
 .kwbox span{font-size:12px; padding:5px 11px; border-radius:8px; background:var(--raise); border:1px solid var(--line2); color:var(--ink)}
+.kwbox span[draggable]{cursor:grab}
+.kwbox span.dragging{opacity:.45}
 .kwbox span.s{color:var(--radar); border-color:var(--radar-d); background:rgba(201,100,66,.07)}
 .kwbox span.m{color:var(--beacon); border-color:var(--beacon-d); background:rgba(255,180,84,.06)}
 .kwbox span.user{border-style:dashed; padding-right:5px}
+.kwbox span.def{user-select:none; transition:opacity .15s}
+.kwbox span.off{opacity:.36; text-decoration:line-through}
 .kwbox span .rm{cursor:pointer; margin-left:5px; color:var(--danger); font-weight:800; font-style:normal}
 .kw-add{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
 .kw-add input{flex:1; min-width:150px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:13px; color:var(--ink); outline:none}
@@ -559,7 +564,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
             <select id="kw-weight" aria-label="가중치"><option value="strong">강한 신호(3)</option><option value="medium">맥락(1)</option></select>
             <button class="btn primary" id="kw-add-btn">＋ 추가</button>
           </div>
-          <p class="desc" style="margin-top:8px">기본 키워드는 그대로 두고, 내가 추가한 키워드(<span style="color:var(--danger)">×</span>로 삭제)가 함께 적용됩니다. 추가 후 <b>관련도 재계산</b>을 누르면 즉시 반영돼요.</p>
+          <p class="desc" style="margin-top:8px">기본 키워드는 <b>클릭으로 켜기/끄기</b>(끄면 <span style="text-decoration:line-through;opacity:.6">취소선</span>), 내가 추가한 건 <span style="color:var(--danger)">×</span>로 삭제. 변경 후 <b>관련도 재계산</b>을 누르면 반영돼요. <span style="color:var(--muted)">원자력(원자로·원전·핵연료)은 STRONG으로 기본 포함 — 좁히려면 끄세요.</span></p>
         </div>
         <div class="panel">
           <h4>수집 / 데이터</h4>
@@ -616,17 +621,22 @@ function _csvDL(rows,scope){
   const b=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='방사선레이더_'+scope+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500);
 }
-const _KWDEF={strong:["방사성동위원소","방사성의약품","방사선","방사능","방사성","방사광","비파괴검사","방사선투과검사","방사선치료","핵의학","테라노스틱스","방사선멸균","전자선조사","방사선차폐","검출기","선량계","방사선안전관리"],medium:["원자력","원전","원자로","SMR","가속기","전자선","중성자","양성자","X선","RI","NDT","핵연료"]};
-function _ukw(){ try{const d=JSON.parse(localStorage.getItem('radi_ukw')||'{}');return {strong:d.strong||[],medium:d.medium||[]};}catch(e){return {strong:[],medium:[]}} }
-function _setUkw(d){ localStorage.setItem('radi_ukw',JSON.stringify({strong:d.strong||[],medium:d.medium||[]})); }
+const _KWDEF={strong:["방사성동위원소","방사성의약품","방사선","방사능","방사성","방사광","비파괴검사","방사선투과검사","방사선치료","핵의학","테라노스틱스","방사선멸균","전자선조사","방사선차폐","검출기","선량계","방사선안전관리","원자로","원전","핵연료"],medium:["원자력","SMR","가속기","전자선","중성자","양성자","X선","RI","NDT"]};
+function _ukw(){ try{const d=JSON.parse(localStorage.getItem('radi_ukw')||'{}');return {strong:d.strong||[],medium:d.medium||[],disabled:d.disabled||[],overrides:d.overrides||{}};}catch(e){return {strong:[],medium:[],disabled:[],overrides:{}}} }
+function _setUkw(d){ localStorage.setItem('radi_ukw',JSON.stringify({strong:d.strong||[],medium:d.medium||[],disabled:d.disabled||[],overrides:d.overrides||{}})); }
 const MOCK = {
   get_overview: ()=>({ok:true,data:{stats:{total:4020,relevant:106,new:8,latest_press_dt:"2026-06-26"},recent:MOCKLIST.slice(0,8).map(_merge)}}),
   list_announcements: (ro,search)=>{const all=(ro?MOCKLIST:MOCKLIST.concat(MOCKEXTRA)).map(_merge).filter(a=>a.state!=='hidden');const q=(search||'').trim();return {ok:true,data:q?all.filter(a=>a.subject.includes(q)):all};},
   run_collect: ()=>new Promise(r=>setTimeout(()=>r({ok:true,data:{fetched:4020,new:3,updated:4017,relevant:125,failed_pages:0,unavailable_pages:15,incomplete:false,expected_total:4169,db_total:4020,stats:{total:4023,relevant:126,new:3,latest_press_dt:"2026-06-27"}}}),1500)),
   rescore: ()=>({ok:true,data:{rescored:4020,stats:{total:4020,relevant:174,new:0,latest_press_dt:"2026-06-26"}}}),
-  get_settings: ()=>{const D=_KWDEF,u=_ukw();return {ok:true,data:{strong:D.strong.concat(u.strong.filter(t=>!D.strong.includes(t))),medium:D.medium.concat(u.medium.filter(t=>!D.medium.includes(t))),defaults:D,threshold:3}};},
+  get_settings: ()=>{const D=_KWDEF,u=_ukw(),dis=new Set(u.disabled);return {ok:true,data:{strong:D.strong.filter(t=>!dis.has(t)).concat(u.strong.filter(t=>!D.strong.includes(t))),medium:D.medium.filter(t=>!dis.has(t)).concat(u.medium.filter(t=>!D.medium.includes(t))),defaults:D,disabled:u.disabled,overrides:u.overrides||{},user:{strong:u.strong,medium:u.medium},threshold:3}};},
+  set_keyword_weight:(term,weight)=>{const u=_ukw(),D=_KWDEF;weight=weight==='strong'?'strong':'medium';
+    if(D.strong.includes(term)||D.medium.includes(term)){const base=D.strong.includes(term)?'strong':'medium';u.overrides=u.overrides||{};if(weight===base)delete u.overrides[term];else u.overrides[term]=weight;}
+    else{u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);u[weight].push(term);}
+    _setUkw(u);return{ok:true,data:{term,weight}};},
   add_keyword:(term,w)=>{term=(term||'').trim();if(!term)return{ok:true};const u=_ukw(),b=w==='strong'?'strong':'medium';u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);if(!_KWDEF[b].includes(term))u[b].push(term);_setUkw(u);return{ok:true};},
   remove_keyword:(term)=>{const u=_ukw();u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);_setUkw(u);return{ok:true};},
+  toggle_default:(term,enabled)=>{const u=_ukw();u.disabled=(u.disabled||[]).filter(t=>t!==term);if(!enabled)u.disabled.push(term);_setUkw(u);return{ok:true,data:{term,enabled:!!enabled}};},
   analyze_deadlines:()=>({ok:true,data:{processed:6,with_deadline:1}}),
   get_key_status:()=>{const k=localStorage.getItem('_mockkey')||''; return {ok:true,data:{has_key:!!k, source:k?'secrets':'none', masked:k?k.slice(0,4)+'***'+k.slice(-4):'', dpapi:true}};},
   set_service_key:(key)=>{localStorage.setItem('_mockkey',(key||'').trim()); return {ok:true,data:{saved:true}};},
@@ -773,18 +783,47 @@ function renderDashboard(){
 }
 function renderSettings(){
   const st=S.settings; if(!st)return;
-  const ds=new Set((st.defaults&&st.defaults.strong)||[]), dm=new Set((st.defaults&&st.defaults.medium)||[]);
-  const render=(arr,cls,defset)=>(arr||[]).map(k=>{
-    const u=!defset.has(k);
-    return `<span class="${cls}${u?' user':''}">${esc(k)}${u?`<i class="rm" data-rm="${esc(k)}" title="삭제">×</i>`:''}</span>`;
-  }).join('');
-  $('#kw-strong').innerHTML=render(st.strong,'s',ds);
-  $('#kw-medium').innerHTML=render(st.medium,'m',dm);
-  $$('#kw-strong .rm, #kw-medium .rm').forEach(x=>x.onclick=async()=>{
-    const r=await api('remove_keyword',x.dataset.rm);
+  const disabled=new Set(st.disabled||[]); const ov=st.overrides||{};
+  const dS=(st.defaults&&st.defaults.strong)||[], dM=(st.defaults&&st.defaults.medium)||[];
+  const uS=(st.user&&st.user.strong)||[], uM=(st.user&&st.user.medium)||[];
+  const strong=[], medium=[];   // override 반영해 실제 가중치 버킷으로 분배
+  dS.forEach(k=>(ov[k]==='medium'?medium:strong).push({t:k,def:true,off:disabled.has(k)}));
+  dM.forEach(k=>(ov[k]==='strong'?strong:medium).push({t:k,def:true,off:disabled.has(k)}));
+  uS.forEach(k=>strong.push({t:k,def:false}));
+  uM.forEach(k=>medium.push({t:k,def:false}));
+  const chip=(c,cls)=> c.def
+    ? `<span class="${cls} def${c.off?' off':''}" draggable="true" data-term="${esc(c.t)}" data-def="${esc(c.t)}" title="${c.off?'꺼짐 — 클릭 켜기':'켜짐 — 클릭 끄기'} · 드래그로 이동">${esc(c.t)}</span>`
+    : `<span class="${cls} user" draggable="true" data-term="${esc(c.t)}">${esc(c.t)}<i class="rm" data-rm="${esc(c.t)}" title="삭제">×</i></span>`;
+  $('#kw-strong').innerHTML=strong.map(c=>chip(c,'s')).join('');
+  $('#kw-medium').innerHTML=medium.map(c=>chip(c,'m')).join('');
+  $$('#kw-strong .def, #kw-medium .def').forEach(x=>x.onclick=async()=>{
+    const term=x.dataset.def, on=x.classList.contains('off');   // off면 켜는 동작
+    const r=await api('toggle_default',term,on);
+    if(r&&r.ok){ x.classList.toggle('off',!on); x.title=on?'켜짐 — 클릭 끄기':'꺼짐 — 클릭 켜기';
+      toast(on?`‘${term}’ 켬 — 재계산 시 반영`:`‘${term}’ 끔 — 재계산 시 반영`); }
+    else toast('변경 실패','err'); });
+  $$('#kw-strong .rm, #kw-medium .rm').forEach(x=>x.onclick=async(e)=>{
+    e.stopPropagation(); const r=await api('remove_keyword',x.dataset.rm);
     if(r&&r.ok){ toast('키워드를 삭제했어요'); await reloadSettings(); }});
+  wireKwDnd();
   const s=S.overview?S.overview.stats:{};
   $('#set-stats').innerHTML=`전체 <b style="color:var(--ink)">${(s.total||0).toLocaleString()}</b>건 · 관련 <b style="color:var(--radar)">${s.relevant||0}</b>건 · 신규 <b style="color:var(--beacon)">${s.new||0}</b>건 · 최신 ${s.latest_press_dt||'—'}`;
+}
+function wireKwDnd(){
+  $$('#kw-strong span, #kw-medium span').forEach(ch=>{
+    ch.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',ch.dataset.term);e.dataTransfer.effectAllowed='move';ch.classList.add('dragging');});
+    ch.addEventListener('dragend',()=>ch.classList.remove('dragging'));
+  });
+  [['#kw-strong','strong'],['#kw-medium','medium']].forEach(([sel,w])=>{
+    const box=$(sel); if(!box)return;
+    box.ondragover=e=>{e.preventDefault();box.classList.add('drop');};
+    box.ondragleave=()=>box.classList.remove('drop');
+    box.ondrop=async e=>{e.preventDefault();box.classList.remove('drop');
+      const term=e.dataTransfer.getData('text/plain'); if(!term)return;
+      const r=await api('set_keyword_weight',term,w);
+      if(r&&r.ok){ toast(`‘${term}’ → ${w==='strong'?'STRONG(3)':'MEDIUM(1)'} 이동`); await reloadSettings(); }
+      else toast('이동 실패','err'); };
+  });
 }
 async function reloadSettings(){ const r=await api('get_settings'); if(r&&r.ok){S.settings=r.data; renderSettings();} reloadKeyStatus(); }
 
