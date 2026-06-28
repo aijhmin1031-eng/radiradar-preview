@@ -572,6 +572,22 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
           </div>
           <div style="margin-top:18px;font-family:var(--sans);font-size:12.5px;color:var(--muted);line-height:1.9" id="set-stats"></div>
         </div>
+        <div class="panel" id="panel-auto">
+          <h4>자동 수집 · 알림</h4>
+          <p class="desc">PC를 켜두면 주기적으로 자동 수집하고, <b>새 공고가 생기면 Windows 알림</b>으로 알려줍니다(별도 설정 없음).</p>
+          <div id="auto-status" class="key-status">상태 확인 중…</div>
+          <div class="kw-add" style="margin-top:10px;align-items:center">
+            <label style="font-size:13px;color:var(--muted)">수집 주기</label>
+            <select id="auto-interval" class="sortsel">
+              <option value="60">1시간</option><option value="180">3시간</option>
+              <option value="360" selected>6시간</option><option value="720">12시간</option>
+              <option value="1440">하루 1회</option>
+            </select>
+            <button class="btn primary" id="auto-on"><span class="spin"></span><span class="lbl">자동수집 켜기</span></button>
+            <button class="btn" id="auto-off">끄기</button>
+            <button class="btn" id="notify-test">🔔 알림 테스트</button>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -615,6 +631,10 @@ const MOCK = {
   get_key_status:()=>{const k=localStorage.getItem('_mockkey')||''; return {ok:true,data:{has_key:!!k, source:k?'secrets':'none', masked:k?k.slice(0,4)+'***'+k.slice(-4):'', dpapi:true}};},
   set_service_key:(key)=>{localStorage.setItem('_mockkey',(key||'').trim()); return {ok:true,data:{saved:true}};},
   test_connection:()=>{const k=localStorage.getItem('_mockkey')||''; return k?{ok:true,data:{fetched:100}}:{ok:false,error:'키 미설정',error_type:'auth'};},
+  auto_status:()=>({ok:true,data:{enabled:localStorage.getItem('_mockauto')==='1',task:'RadiRadar_Collect'}}),
+  register_auto:(m)=>{localStorage.setItem('_mockauto','1');return {ok:true,data:{enabled:true,minutes:m}};},
+  unregister_auto:()=>{localStorage.removeItem('_mockauto');return {ok:true,data:{enabled:false}};},
+  notify_test:()=>({ok:true,data:{sent:true}}),
   set_state:(id,st)=>{_setOv(id,{state:st});return{ok:true};},
   set_note:(id,note)=>{_setOv(id,{note:(note||'').trim()||null});return{ok:true};},
   set_track:(id,st)=>{_setOv(id,{track_status:st||null});return{ok:true};},
@@ -1021,6 +1041,7 @@ async function boot(first){
   const all=await api('list_announcements',false,"",null,300); if(all&&all.ok){S.all=all.data;}
   const st=await api('get_settings'); if(st&&st.ok){S.settings=st.data; renderSettings();}
   reloadKeyStatus();   // 연동 키 상태
+  reloadAutoStatus();  // 자동수집 상태
   loadTracked();   // 보관함 배지·데이터
   $('#foot-time').textContent=new Date().toLocaleString('ko-KR',{hour12:false}).slice(5);
   if(first) toast('레이더 가동 — 라디가 준비됐어요 🛰️');
@@ -1115,6 +1136,21 @@ $('#key-test')&&($('#key-test').onclick=async()=>{
   else toast('❌ 연결 실패: '+((r&&r.error_type==='auth')?'키 인증 오류(키 확인)':((r&&r.error)||'알 수 없음')),'err');
 });
 $('#key-issue')&&($('#key-issue').onclick=(e)=>{e.preventDefault();api('open_url','https://www.data.go.kr');});
+async function reloadAutoStatus(){
+  const el=$('#auto-status'); if(!el)return;
+  const r=await api('auto_status');
+  if(r&&r.ok&&r.data&&r.data.enabled){el.innerHTML='✅ 자동수집 켜짐 — 주기적으로 수집하고 새 공고를 알림합니다';el.className='key-status ok';}
+  else{el.innerHTML='⏸ 자동수집 꺼짐 — 수동 ‘공고 수집’만 동작';el.className='key-status';}
+}
+$('#auto-on')&&($('#auto-on').onclick=async()=>{
+  const b=$('#auto-on');b.classList.add('loading');b.disabled=true;
+  const sel=$('#auto-interval'),m=parseInt(sel.value||'360',10);
+  const r=await api('register_auto',m);b.classList.remove('loading');b.disabled=false;
+  if(r&&r.ok&&r.data&&r.data.enabled){toast('자동수집 켜짐 ('+sel.selectedOptions[0].text+' 주기)');reloadAutoStatus();}
+  else toast('등록 실패: '+((r&&r.error)||'권한 확인'),'err');
+});
+$('#auto-off')&&($('#auto-off').onclick=async()=>{const r=await api('unregister_auto'); if(r&&r.ok){toast('자동수집 꺼짐');reloadAutoStatus();} else toast('해제 실패','err');});
+$('#notify-test')&&($('#notify-test').onclick=async()=>{const r=await api('notify_test'); toast((r&&r.ok&&r.data&&r.data.sent)?'🔔 알림을 보냈어요 — 우측하단을 확인하세요':'알림 실패(Windows 알림 허용 확인)', (r&&r.ok)?'':'err');});
 $('#kw-add-btn')&&($('#kw-add-btn').onclick=async()=>{
   const inp=$('#kw-input'), term=(inp.value||'').trim(); if(!term){inp.focus();return;}
   const r=await api('add_keyword',term,$('#kw-weight').value);
