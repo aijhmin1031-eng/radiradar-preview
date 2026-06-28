@@ -407,6 +407,12 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .list-note b{color:var(--ink);font-family:var(--mono)}
 /* 키보드 포커스 가시화 */
 :focus-visible{outline:2px solid var(--radar);outline-offset:2px;border-radius:6px}
+/* 클릭형 div(카드·파일·체크리스트)도 키보드 포커스 가시화 */
+.card:focus-visible,.file:focus-visible{outline:2px solid var(--radar);outline-offset:2px;box-shadow:0 0 0 4px rgba(201,100,66,.18)}
+.checklist li:focus-visible{outline:2px solid var(--radar);outline-offset:2px;border-radius:6px}
+.card[tabindex]{cursor:pointer}
+/* 창이 백그라운드/최소화일 때 장식 애니 정지 — idle GPU·배터리 절약 */
+body.bg-paused *{animation-play-state:paused!important}
 /* 수집 진행 결정형 표시 */
 .btn .lbl[data-progress]{font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion: reduce){
@@ -788,6 +794,8 @@ function renderList(el,items,emptyKind){
   el.innerHTML=items.map(cardHTML).join('');
   el.querySelectorAll('.card').forEach(c=>{
     c.onclick=()=>openDetail(c.dataset.id);
+    c.setAttribute('tabindex','0'); c.setAttribute('role','button');
+    c.onkeydown=e=>{ if(e.target===c && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); openDetail(c.dataset.id); } };
     const star=c.querySelector('[data-act="star"]');
     if(star) star.onclick=async(e)=>{
       e.stopPropagation();
@@ -954,7 +962,11 @@ function renderRich(d,a){
   const fields=rows.map(r=>`<div class="rf"><span class="rf-k">${r[0]}</span><span class="rf-v">${r[1]}</span></div>`).join('');
   const sum=d.purpose?`<div class="rf-sum"><span class="rf-k">📌 주요내용</span><div>${esc(d.purpose)}</div></div>`:'';
   el.innerHTML=`<div class="rich-h">📄 공고 상세 <span class="rich-src">(${esc(d.source_ext||'첨부')} 자동추출)</span></div>${sum}${fields}${checklistHTML(a,d)}`;
-  el.querySelectorAll('.checklist li').forEach(li=>li.onclick=()=>li.classList.toggle('done'));
+  el.querySelectorAll('.checklist li').forEach(li=>{
+    const toggle=()=>{li.classList.toggle('done'); li.setAttribute('aria-checked',li.classList.contains('done')?'true':'false');};
+    li.setAttribute('tabindex','0'); li.setAttribute('role','checkbox'); li.setAttribute('aria-checked','false');
+    li.onclick=toggle; li.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}};
+  });
 }
 let _detailId=null;
 async function openDetail(id){
@@ -1003,9 +1015,12 @@ async function openDetail(id){
   $('#sheet').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeModal);
   const openBtn=$('#sheet').querySelector('[data-open]');
   openBtn.onclick=async e=>{const r=await api('open_url',e.currentTarget.dataset.open); if(r&&r.ok&&r.data===false) toast('이 링크는 열 수 없습니다','warn');};
-  $('#sheet').querySelectorAll('.file').forEach(f=>f.onclick=async()=>{
-    if(!f.dataset.url||f.dataset.url==='#'){toast('첨부 링크가 없습니다','warn');return;}
-    const r=await api('open_url',f.dataset.url); if(r&&r.ok&&r.data===false) toast('이 첨부는 열 수 없습니다','warn');});
+  $('#sheet').querySelectorAll('.file').forEach(f=>{
+    const open=async()=>{ if(!f.dataset.url||f.dataset.url==='#'){toast('첨부 링크가 없습니다','warn');return;}
+      const r=await api('open_url',f.dataset.url); if(r&&r.ok&&r.data===false) toast('이 첨부는 열 수 없습니다','warn'); };
+    f.setAttribute('tabindex','0'); f.setAttribute('role','button');
+    f.onclick=open; f.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};
+  });
   $('#sheet').querySelectorAll('[data-state]').forEach(b=>b.onclick=async()=>{
     const st=b.dataset.state; const r=await api('set_state',id,st);
     if(r&&r.ok){ updateLocalState(id,st); toast(st==='saved'?'저장했어요':'숨김 처리했어요'); refreshCurrentList(); }
@@ -1029,7 +1044,7 @@ async function openDetail(id){
 }
 function _trapTab(e){
   if(e.key!=='Tab')return;
-  const f=[...$('#sheet').querySelectorAll('button,[href],input,[tabindex]:not([tabindex="-1"])')].filter(el=>el.offsetParent!==null);
+  const f=[...$('#sheet').querySelectorAll('button,[href],input,textarea,select,[tabindex]:not([tabindex="-1"])')].filter(el=>el.offsetParent!==null);
   if(!f.length)return; const first=f[0],last=f[f.length-1];
   if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
   else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
@@ -1256,6 +1271,7 @@ $('#btn-rescore').onclick=async()=>{
   finally{ btns.forEach(b=>{b.classList.remove('loading');b.disabled=false;}); _busy=false; }
 };
 
+document.addEventListener('visibilitychange',()=>{ document.body.classList.toggle('bg-paused', document.hidden); });  // 절전
 // 부팅: 실앱은 pywebviewready 핸들러가, 미리보기(브라우저)는 여기서 즉시. 가드가 중복을 막음.
 if(!window.pywebview) boot(true);
 setTimeout(()=>{ if(!_booted) boot(true); }, 1000);   // ready 누락 안전망
