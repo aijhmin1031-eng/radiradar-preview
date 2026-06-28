@@ -184,6 +184,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .fgroup{display:flex; align-items:center; gap:7px}
 .sortsel{font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:8px 10px; cursor:pointer; outline:none}
 .sortsel:focus{border-color:var(--radar-d)}
+.sortsel.on{color:#fff; background:var(--good); border-color:var(--good)}
 .export-bar{margin-left:auto; display:flex; gap:8px}
 /* 계층별 색: 공급제조=호박, 이용응용=틸, 기반안전=보라 */
 #tier-rel button[data-v="mfg"].on{color:var(--tier-mfg); border-color:var(--beacon-d); background:rgba(255,180,84,.10)}
@@ -306,6 +307,12 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 #track-note:focus{border-color:var(--radar-d)}
 .card .meta .trk{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px; background:rgba(201,100,66,.12); color:var(--radar-d); border:1px solid var(--radar-d)}
 .card .meta .has-note{font-size:11px}
+.st-badge{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px; white-space:nowrap}
+.st-open{background:var(--good); color:#fff}
+.st-closed{background:var(--line2); color:var(--muted)}
+.st-unknown{background:var(--raise); color:var(--dim); border:1px solid var(--line)}
+.card.closed{opacity:.62}
+.card.closed:hover{opacity:.92}
 .files{display:flex; flex-direction:column; gap:7px; margin:14px 0}
 .file{display:flex; align-items:center; gap:10px; background:var(--raise); border:1px solid var(--line); border-radius:9px; padding:10px 13px; font-size:12.5px; cursor:pointer; transition:.15s}
 .file:hover{border-color:var(--radar)} .file .fi{color:var(--beacon)}
@@ -468,7 +475,8 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
     <section class="view" data-view="relevant">
       <div class="toolbar">
         <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-rel" aria-label="방사선 공고 검색" placeholder="제목으로 검색…"></div>
-        <select id="sort-rel" class="sortsel" aria-label="정렬 기준"><option value="new">최신순</option><option value="rel">관련도순</option><option value="old">오래된순</option></select>
+        <select id="sort-rel" class="sortsel" aria-label="정렬 기준"><option value="new">최신순</option><option value="dday">마감임박순</option><option value="rel">관련도순</option><option value="old">오래된순</option></select>
+        <button id="open-only" class="sortsel" type="button" aria-pressed="false">진행중만</button>
         <div class="fgroup"><span class="chiplbl">상태</span>
           <div class="chiptog" id="state-rel" role="group" aria-label="상태 필터">
             <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="new" aria-pressed="false">신규</button><button data-v="saved" aria-pressed="false">저장</button>
@@ -534,6 +542,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
             <button class="btn primary" id="btn-collect2"><span class="spin"></span><span class="lbl">최신 수집</span></button>
             <button class="btn" id="btn-full"><span class="spin"></span><span class="lbl">전체 백필</span></button>
             <button class="btn" id="btn-rescore"><span class="spin"></span><span class="lbl">관련도 재계산</span></button>
+            <button class="btn" id="btn-deadlines"><span class="spin"></span><span class="lbl">마감일 분석</span></button>
           </div>
           <div style="margin-top:18px;font-family:var(--sans);font-size:12.5px;color:var(--muted);line-height:1.9" id="set-stats"></div>
         </div>
@@ -554,7 +563,10 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 /* 미리보기 영속(localStorage) — 메모·상태·보관함이 새로고침에도 유지 */
 function _ov(){ try{return JSON.parse(localStorage.getItem('radi_ov')||'{}')}catch(e){return {}} }
 function _setOv(id,p){ const o=_ov(); o[id]=Object.assign({},o[id]||{},p); localStorage.setItem('radi_ov',JSON.stringify(o)); }
-function _merge(a){ const o=_ov()[a.id]; return o?Object.assign({},a,o):a; }
+function _merge(a){ const o=_ov()[a.id]; let m=o?Object.assign({},a,o):a;
+  const dd=(typeof MOCKDETAIL!=='undefined')&&MOCKDETAIL[a.id];
+  if(dd&&dd.deadline&&!m.deadline) m=Object.assign({},m,{deadline:dd.deadline});   // 미리보기: 상세의 마감일을 목록에 주입
+  return m; }
 function _csvDL(rows,scope){
   const C=[['게시일','press_dt'],['제목','subject'],['출처','source'],['관련도','relevance'],['진행상태','track_status'],['메모','note'],['담당부서','dept_name'],['원문링크','view_url']];
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
@@ -573,6 +585,7 @@ const MOCK = {
   get_settings: ()=>{const D=_KWDEF,u=_ukw();return {ok:true,data:{strong:D.strong.concat(u.strong.filter(t=>!D.strong.includes(t))),medium:D.medium.concat(u.medium.filter(t=>!D.medium.includes(t))),defaults:D,threshold:3}};},
   add_keyword:(term,w)=>{term=(term||'').trim();if(!term)return{ok:true};const u=_ukw(),b=w==='strong'?'strong':'medium';u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);if(!_KWDEF[b].includes(term))u[b].push(term);_setUkw(u);return{ok:true};},
   remove_keyword:(term)=>{const u=_ukw();u.strong=u.strong.filter(t=>t!==term);u.medium=u.medium.filter(t=>t!==term);_setUkw(u);return{ok:true};},
+  analyze_deadlines:()=>({ok:true,data:{processed:6,with_deadline:1}}),
   set_state:(id,st)=>{_setOv(id,{state:st});return{ok:true};},
   set_note:(id,note)=>{_setOv(id,{note:(note||'').trim()||null});return{ok:true};},
   set_track:(id,st)=>{_setOv(id,{track_status:st||null});return{ok:true};},
@@ -649,12 +662,13 @@ function cardHTML(a,i){
   const lvl=a.relevance>=6?'hi':(a.relevance<3?'lo':'');
   const isNew=a.state==='new';
   const tier=tierOf(a), tlab={mfg:'공급·제조',use:'이용·응용',base:'기반·안전'}[tier];
+  const st=statusOf(a);
   const kws=(a.matched||[]).slice(0,4).map(k=>`<span>${esc(k)}</span>`).join('');
-  return `<div class="card" style="animation-delay:${i*40}ms" data-id="${esc(a.id)}">
+  return `<div class="card ${st.k==='closed'?'closed':''}" style="animation-delay:${i*40}ms" data-id="${esc(a.id)}">
     <div class="score ${lvl}" title="관련도 ${a.relevance||0}점 — 방사선 키워드 가중치 합(STRONG 3·MEDIUM 1)"><b>${a.relevance||0}</b><span>관련도</span></div>
     <div class="body-c">
       <div class="title">${esc(a.subject)}</div>
-      <div class="meta"><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>${a.track_status&&a.track_status!=='관심'?`<span class="trk">${esc(a.track_status)}</span>`:''}${a.note?'<span class="has-note" title="메모 있음">📝</span>':''}${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
+      <div class="meta"><span class="st-badge st-${st.k}">${st.k==='open'?'진행중 '+st.label:st.label}</span><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>${a.track_status&&a.track_status!=='관심'?`<span class="trk">${esc(a.track_status)}</span>`:''}${a.note?'<span class="has-note" title="메모 있음">📝</span>':''}${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
       ${kws?`<div class="kw">${kws}</div>`:''}
     </div>
     <div class="card-actions">
@@ -769,6 +783,20 @@ function ddayText(dl){
   if(days<0) return '마감';
   if(days===0) return 'D-DAY';
   return 'D-'+days;
+}
+/* 공고 상태: 마감일(있으면) → 진행중/마감, 없으면 게시일 12개월 proxy */
+function statusOf(a){
+  const dl=a.deadline;
+  if(dl && /^\d{4}-\d{2}-\d{2}/.test(dl)){
+    const days=Math.ceil((new Date(dl.slice(0,10)+'T23:59:59')-new Date())/86400000);
+    if(days>=0) return {k:'open', label:days===0?'D-DAY':'D-'+days, days};
+    return {k:'closed', label:'마감', days};
+  }
+  if(a.press_dt){
+    const days=Math.floor((new Date()-new Date(a.press_dt+'T00:00:00'))/86400000);
+    if(days>365) return {k:'closed', label:'마감', days:-9999};
+  }
+  return {k:'unknown', label:'마감 미상', days:99999};
 }
 function renderRich(d,a){
   const el=$('#detail-rich'); if(!el) return;
@@ -978,20 +1006,23 @@ function wireSearch(input,getData,target){
   $(input).addEventListener('input',e=>{const q=e.target.value.trim();const d=getData().filter(a=>!q||a.subject.includes(q));renderList($(target),d,'search');});
 }
 /* ── 관련탭 통합 필터: 상태 × 소스 × 계층 × 검색 동시 적용 ── */
-let relF={state:'',source:'',tier:''};
+let relF={state:'',source:'',tier:'',openOnly:false};
 function applyRelFilters(){
   const q=(($('#search-rel')||{}).value||'').trim();
   let d=S.rel||[];
   if(relF.state)  d=d.filter(a=>a.state===relF.state);
   if(relF.source) d=d.filter(a=>a.source===relF.source);
   if(relF.tier)   d=d.filter(a=>tierOf(a)===relF.tier);
+  if(relF.openOnly) d=d.filter(a=>statusOf(a).k==='open');
   if(q)           d=d.filter(a=>a.subject.includes(q));
   const sv=(($('#sort-rel')||{}).value)||'new';
-  d=d.slice().sort((a,b)=> sv==='rel' ? ((b.relevance||0)-(a.relevance||0))
+  const sval=a=>{const s=statusOf(a); return s.k==='open'?s.days : s.k==='unknown'?100000 : 200000;};
+  d=d.slice().sort((a,b)=> sv==='dday' ? (sval(a)-sval(b))
+    : sv==='rel' ? ((b.relevance||0)-(a.relevance||0))
     : sv==='old' ? ((a.press_dt||'')<(b.press_dt||'')?-1:1)
     : ((a.press_dt||'')>(b.press_dt||'')?-1:1));
   const note=$('#rel-note');
-  if(note) note.innerHTML=`방사선 공고 <b>${d.length}</b>건`+((relF.state||relF.source||relF.tier||q)?' <span style="color:var(--radar)">· 필터 적용</span>':'');
+  if(note) note.innerHTML=`방사선 공고 <b>${d.length}</b>건`+((relF.state||relF.source||relF.tier||relF.openOnly||q)?' <span style="color:var(--radar)">· 진행중 '+( (S.rel||[]).filter(a=>statusOf(a).k==='open').length )+' · 필터</span>':' · <span style="color:var(--good);font-weight:800">진행중 '+((S.rel||[]).filter(a=>statusOf(a).k==='open').length)+'건</span>');
   renderList($('#rel-list'),d,'search');
 }
 function wireChips(gid,key){const g=$(gid); if(!g)return;
@@ -1001,6 +1032,7 @@ function wireChips(gid,key){const g=$(gid); if(!g)return;
 wireChips('#state-rel','state'); wireChips('#source-rel','source'); wireChips('#tier-rel','tier');
 $('#search-rel').addEventListener('input',applyRelFilters);
 $('#sort-rel')&&($('#sort-rel').onchange=applyRelFilters);
+$('#open-only')&&($('#open-only').onclick=()=>{ relF.openOnly=!relF.openOnly; $('#open-only').classList.toggle('on',relF.openOnly); $('#open-only').setAttribute('aria-pressed',relF.openOnly?'true':'false'); applyRelFilters(); });
 let _allSearchT=null;
 $('#search-all').addEventListener('input',e=>{
   const q=e.target.value.trim(); clearTimeout(_allSearchT);
@@ -1025,6 +1057,13 @@ $('#kw-add-btn')&&($('#kw-add-btn').onclick=async()=>{
   else toast('추가 실패','err');
 });
 $('#kw-input')&&$('#kw-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#kw-add-btn').click();}});
+$('#btn-deadlines')&&($('#btn-deadlines').onclick=async()=>{
+  const b=$('#btn-deadlines'); b.classList.add('loading'); b.disabled=true;
+  const r=await api('analyze_deadlines');
+  b.classList.remove('loading'); b.disabled=false;
+  if(r&&r.ok){ toast('마감일 분석 완료 — 진행중 '+((r.data&&r.data.with_deadline)||0)+'건'); await boot(false); }
+  else toast('마감일 분석 실패','err');
+});
 $('#trk-filter').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   $$('#trk-filter button').forEach(x=>x.classList.toggle('on',x===b)); renderTracked();};
 $('#btn-collect').onclick=()=>doCollect(false);
