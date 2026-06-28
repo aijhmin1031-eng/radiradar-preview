@@ -195,6 +195,13 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .t-mfg{color:#946724; background:rgba(190,138,60,.12); border:1px solid var(--beacon-d)}
 .t-use{color:#a94c2b; background:rgba(201,100,66,.10); border:1px solid var(--radar-d)}
 .t-base{color:#514c86; background:rgba(111,106,168,.12); border:1px solid #6f6aa8}
+.cat{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px}
+.cat-rad{color:var(--radar-d); background:rgba(201,100,66,.12); border:1px solid var(--radar-d)}
+.cat-sup{color:#356b9e; background:rgba(53,107,158,.12); border:1px solid #356b9e}
+.t-sup{color:#356b9e; background:rgba(53,107,158,.10); border:1px solid #356b9e}
+.score.sup{background:rgba(53,107,158,.10); border-color:#356b9e}
+.score.sup b{color:#356b9e}
+.card .meta .src-mss{color:#356b9e; border-color:#356b9e}
 /* 관련도 강조(고득점) */
 .score.hi{background:rgba(201,100,66,.16); border-color:var(--radar); box-shadow:0 0 16px rgba(201,100,66,.20)}
 .score.hi b{color:var(--radar)}
@@ -477,6 +484,10 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
         <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7e95a5" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="search-rel" aria-label="방사선 공고 검색" placeholder="제목으로 검색…"></div>
         <select id="sort-rel" class="sortsel" aria-label="정렬 기준"><option value="new">최신순</option><option value="dday">마감임박순</option><option value="rel">관련도순</option><option value="old">오래된순</option></select>
         <button id="open-only" class="sortsel" type="button" aria-pressed="false">진행중만</button>
+        <div class="fgroup"><span class="chiplbl">분류</span>
+          <div class="chiptog" id="cat-rel" role="group" aria-label="분류 필터">
+            <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="rad" aria-pressed="false">방사선</button><button data-v="sup" aria-pressed="false">기업지원</button>
+          </div></div>
         <div class="fgroup"><span class="chiplbl">상태</span>
           <div class="chiptog" id="state-rel" role="group" aria-label="상태 필터">
             <button class="on" data-v="" aria-pressed="true">전체</button><button data-v="new" aria-pressed="false">신규</button><button data-v="saved" aria-pressed="false">저장</button>
@@ -603,7 +614,10 @@ const MOCKLIST=[
  {id:"m3",subject:"2025년도 미래 방사선 강점기술 고도화사업 신규과제 공모",press_dt:"2025-02-04",dept_name:"원자력연구개발과",relevance:3,matched:["방사선"],state:"saved",source:"msit",manager_name:"박담당",manager_tel:"044-202-0002",view_url:_MV+"3179236",files:[{name:"미래 방사선 강점기술 고도화사업 공고문.hwp",url:_MV+"3179236"}]},
  {id:"n1",subject:"2022년 방사성동위원소 이용 고부가 사업화 지원 신규과제 공고",press_dt:"2022-06-14",dept_name:"",relevance:3,matched:["방사성동위원소"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1071081",files:[]},
  {id:"n2",subject:"2023년 방사성동위원소 이용 고부가 사업화 지원 신규과제 공고(재공고)",press_dt:"2023-04-10",dept_name:"",relevance:3,matched:["방사성동위원소"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1134844",files:[]},
- {id:"n3",subject:"2022년도 방사선 이용 희귀난치질환 대응 핵심기술개발사업(치료용 방사성동위원소 이용 의약품 제조) 신규과제 공고",press_dt:"2022-05-09",dept_name:"",relevance:6,matched:["방사성동위원소","방사선"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1087634",files:[]}
+ {id:"n3",subject:"2022년도 방사선 이용 희귀난치질환 대응 핵심기술개발사업(치료용 방사성동위원소 이용 의약품 제조) 신규과제 공고",press_dt:"2022-05-09",dept_name:"",relevance:6,matched:["방사성동위원소","방사선"],state:"new",source:"ntis",manager_name:"",manager_tel:"",view_url:_NV+"1087634",files:[]},
+ {id:"s1",subject:"2026년도 중소기업기술혁신개발사업 수출지향형(함께달리기·이어달리기) 시행계획 공고",press_dt:"2026-04-21",dept_name:"기술개발과",relevance:0,matched:["R&D·기술개발"],state:"new",source:"mss",manager_name:"중기부",manager_tel:"1357",view_url:"https://www.mss.go.kr",deadline:"2026-07-22",files:[{name:"공고문.hwp",url:"https://www.mss.go.kr"}]},
+ {id:"s2",subject:"2026년도 기술사업화 패키지 지원사업 제2차 시행계획 공고",press_dt:"2026-05-02",dept_name:"기술혁신정책과",relevance:0,matched:["기술이전·사업화"],state:"new",source:"mss",manager_name:"중기부",manager_tel:"1357",view_url:"https://www.mss.go.kr",deadline:"2026-07-15",files:[]},
+ {id:"s3",subject:"2026년도 기술개발제품 공공기관 실증지원 사업 공고",press_dt:"2026-03-15",dept_name:"판로정책과",relevance:0,matched:["실증"],state:"new",source:"mss",manager_name:"중기부",manager_tel:"1357",view_url:"https://www.mss.go.kr",deadline:"2026-06-10",files:[]}
 ];
 const MOCKEXTRA=[{id:"x1",subject:"2026년 ICT 중소기업 정보보호 지원 사업 수요기업 모집 공고",press_dt:"2026-06-26",dept_name:"정보보호산업과",relevance:0,matched:[],state:"new",source:"msit",view_url:_MV+"3186700",files:[]}];
 /* 미리보기용 — 공고문 자동추출 샘플(실제 앱은 첨부 hwpx/odt/pdf를 라이브 파싱). NTIS(n*)는 첨부 없음. */
@@ -626,7 +640,7 @@ window.addEventListener('pywebviewready',()=>{ BRIDGE=window.pywebview.api; boot
 /* ====== 상태 ====== */
 const S={overview:null, rel:[], all:[], tracked:[], settings:null};
 let _lastFocused=null;
-const SRC_LABEL={msit:'과기정통부', ntis:'NTIS'};   // 소스 키 → 표시명
+const SRC_LABEL={msit:'과기정통부', ntis:'NTIS', mss:'중기부'};   // 소스 키 → 표시명
 const TIER_LABEL={mfg:'공급·제조', use:'이용·응용', base:'기반·안전'};
 // 매칭 키워드로 방사선 산업 3계층 분류(정의 taxonomy 기반). 안전→base, 선원·장비·소재 제조→mfg, 그 외 응용→use.
 function tierOf(a){
@@ -659,16 +673,24 @@ window.onCollectProgress=function(done,total){
 
 /* ====== 렌더 ====== */
 function cardHTML(a,i){
-  const lvl=a.relevance>=6?'hi':(a.relevance<3?'lo':'');
+  const support=a.source==='mss';
+  const sup=(a.matched&&a.matched[0])||'지원';
+  const lvl=support?'':(a.relevance>=6?'hi':(a.relevance<3?'lo':''));
   const isNew=a.state==='new';
   const tier=tierOf(a), tlab={mfg:'공급·제조',use:'이용·응용',base:'기반·안전'}[tier];
   const st=statusOf(a);
-  const kws=(a.matched||[]).slice(0,4).map(k=>`<span>${esc(k)}</span>`).join('');
+  const kws=support?'':(a.matched||[]).slice(0,4).map(k=>`<span>${esc(k)}</span>`).join('');
+  const scoreBox=support
+    ? `<div class="score sup" title="기업지원 유형 — ${esc(sup)}"><b style="font-size:10.5px;line-height:1.15">${esc(sup.split('·')[0])}</b><span>지원</span></div>`
+    : `<div class="score ${lvl}" title="관련도 ${a.relevance||0}점 — 방사선 키워드 가중치 합(STRONG 3·MEDIUM 1)"><b>${a.relevance||0}</b><span>관련도</span></div>`;
+  const clsBadge=support
+    ? `<span class="cat cat-sup">기업지원</span><span class="tier-tag t-sup">${esc(sup)}</span>`
+    : `<span class="cat cat-rad">방사선</span><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>`;
   return `<div class="card ${st.k==='closed'?'closed':''}" style="animation-delay:${i*40}ms" data-id="${esc(a.id)}">
-    <div class="score ${lvl}" title="관련도 ${a.relevance||0}점 — 방사선 키워드 가중치 합(STRONG 3·MEDIUM 1)"><b>${a.relevance||0}</b><span>관련도</span></div>
+    ${scoreBox}
     <div class="body-c">
       <div class="title">${esc(a.subject)}</div>
-      <div class="meta"><span class="st-badge st-${st.k}">${st.k==='open'?'진행중 '+st.label:st.label}</span><span class="tier-tag t-${tier}" title="${tlab} 계층 · 방사선 산업 3계층 분류">${tlab}</span>${a.track_status&&a.track_status!=='관심'?`<span class="trk">${esc(a.track_status)}</span>`:''}${a.note?'<span class="has-note" title="메모 있음">📝</span>':''}${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
+      <div class="meta"><span class="st-badge st-${st.k}">${st.k==='open'?'진행중 '+st.label:st.label}</span>${clsBadge}${a.track_status&&a.track_status!=='관심'?`<span class="trk">${esc(a.track_status)}</span>`:''}${a.note?'<span class="has-note" title="메모 있음">📝</span>':''}${isNew?'<span class="new">NEW</span>':''}<span class="dt">${esc(a.press_dt||'—')}</span>${a.dept_name?`<span>${esc(a.dept_name)}</span>`:''}${a.source?`<span class="src src-${esc(a.source)}">${esc(SRC_LABEL[a.source]||a.source)}</span>`:''}</div>
       ${kws?`<div class="kw">${kws}</div>`:''}
     </div>
     <div class="card-actions">
@@ -1006,13 +1028,14 @@ function wireSearch(input,getData,target){
   $(input).addEventListener('input',e=>{const q=e.target.value.trim();const d=getData().filter(a=>!q||a.subject.includes(q));renderList($(target),d,'search');});
 }
 /* ── 관련탭 통합 필터: 상태 × 소스 × 계층 × 검색 동시 적용 ── */
-let relF={state:'',source:'',tier:'',openOnly:false};
+let relF={state:'',source:'',tier:'',openOnly:false,cat:''};
 function applyRelFilters(){
   const q=(($('#search-rel')||{}).value||'').trim();
   let d=S.rel||[];
   if(relF.state)  d=d.filter(a=>a.state===relF.state);
   if(relF.source) d=d.filter(a=>a.source===relF.source);
-  if(relF.tier)   d=d.filter(a=>tierOf(a)===relF.tier);
+  if(relF.cat)    d=d.filter(a=>(a.source==='mss'?'sup':'rad')===relF.cat);
+  if(relF.tier)   d=d.filter(a=>a.source!=='mss' && tierOf(a)===relF.tier);
   if(relF.openOnly) d=d.filter(a=>statusOf(a).k==='open');
   if(q)           d=d.filter(a=>a.subject.includes(q));
   const sv=(($('#sort-rel')||{}).value)||'new';
@@ -1029,7 +1052,7 @@ function wireChips(gid,key){const g=$(gid); if(!g)return;
   g.onclick=e=>{const b=e.target.closest('button'); if(!b)return;
     $$(gid+' button').forEach(x=>{const on=x===b; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on?'true':'false');});
     relF[key]=b.dataset.v||''; applyRelFilters();};}
-wireChips('#state-rel','state'); wireChips('#source-rel','source'); wireChips('#tier-rel','tier');
+wireChips('#cat-rel','cat'); wireChips('#state-rel','state'); wireChips('#source-rel','source'); wireChips('#tier-rel','tier');
 $('#search-rel').addEventListener('input',applyRelFilters);
 $('#sort-rel')&&($('#sort-rel').onchange=applyRelFilters);
 $('#open-only')&&($('#open-only').onclick=()=>{ relF.openOnly=!relF.openOnly; $('#open-only').classList.toggle('on',relF.openOnly); $('#open-only').setAttribute('aria-pressed',relF.openOnly?'true':'false'); applyRelFilters(); });
