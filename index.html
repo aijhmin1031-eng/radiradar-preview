@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>방사선 사업기회 레이더 · RadiRadar</title>
-<link rel="stylesheet" as="style" crossorigin
-  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
 <style>
+/* Pretendard Variable — 로컬 번들 우선(오프라인·CDN 독립), 실패 시 CDN 폴백. 데스크톱 앱 폰트 안정화. */
+@font-face{
+  font-family:"Pretendard Variable"; font-weight:45 920; font-style:normal; font-display:swap;
+  src:url("./fonts/PretendardVariable.woff2") format("woff2-variations"),
+      url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
+}
 :root{
   /* ===== 디자인 토큰 — Claude 풍 웜 라이트 (테마/색 확장 지점) ===== */
   --bg:#eceae1;        /* 페이지 바탕(웜 페이퍼) */
@@ -349,6 +353,15 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
   border-radius:var(--r-sm); padding:12px 16px; font-size:var(--fs-base); min-width:240px; box-shadow:var(--shadow-xl);
   animation:slide .3s cubic-bezier(.2,.8,.2,1)}
 .toast.ok{border-left-color:var(--good)}
+/* 로딩 스켈레톤 — 빈 화면 깜빡임 방지 */
+.skel-card{height:76px; border-radius:var(--r); border:1px solid var(--line); margin-bottom:10px;
+  background:linear-gradient(100deg,var(--panel) 30%,var(--raise) 50%,var(--panel) 70%);
+  background-size:200% 100%; animation:shimmer 1.3s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.skel-card{animation:none}}
+/* 인터랙티브 hover 상태 보강 */
+.sortsel:hover{border-color:var(--line2)}
+.chiptog button:hover:not(.on){border-color:var(--line2); color:var(--ink)}
 .toast.warn{border-left-color:var(--beacon)} .toast.err{border-left-color:var(--danger)}
 @keyframes slide{from{opacity:0; transform:translateX(20px)} to{opacity:1; transform:none}}
 @media (max-width:1080px){.hero{grid-template-columns:1fr} .stats{grid-template-columns:repeat(2,1fr)} .set-grid{grid-template-columns:1fr}}
@@ -1096,6 +1109,8 @@ let _booted=false, _booting=false;
 async function boot(first){
   if(first){ if(_booting||_booted) return; _booting=true; }   // 초기 부팅 1회 가드(이중 실행 방지)
   try{
+    if(first){ const sk=n=>'<div class="skel-card"></div>'.repeat(n);
+      const dl=$('#dash-list'); if(dl)dl.innerHTML=sk(4); const rl=$('#rel-list'); if(rl)rl.innerHTML=sk(5); }  // 로딩 스켈레톤
     const o=await api('get_overview'); if(o&&o.ok){S.overview=o.data; renderDashboard(); renderSettings();}
     const rel=await api('list_announcements',true,"",null,300); if(rel&&rel.ok){S.rel=rel.data; applyRelFilters();}
     const all=await api('list_announcements',false,"",null,300); if(all&&all.ok){S.all=all.data;}
