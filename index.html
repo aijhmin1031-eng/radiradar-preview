@@ -155,20 +155,13 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .radar .corecount b{font-family:var(--mono); font-size:34px; font-weight:800; color:var(--radar); text-shadow:var(--glow)}
 .radar .corecount span{font-size:11px; color:var(--muted); margin-top:2px; letter-spacing:.06em}
 
-/* ===== 마스코트 라디 (클레이 레이더) ===== */
+/* ===== 라디 레이더 심볼 ===== */
 .radi{width:116px; height:116px; flex:none; overflow:visible}
-.radi .body{fill:url(#rg)}
-.radi .eye{fill:#3a261d}
-.radi .shine{fill:#fff}
-.radi .mouth{fill:none; stroke:#3a261d; stroke-width:5; stroke-linecap:round}
-.radi .ant{stroke:#9a4a2b; stroke-width:6; stroke-linecap:round}
-.radi .cheek{fill:#ef9670; opacity:.55}
-.radi .eyes{transform-origin:120px 141px; animation:blink 5.4s infinite}
-@keyframes blink{0%,94%,100%{transform:scaleY(1)} 97%{transform:scaleY(.08)}}
-.radi .waves{animation:radiwave 2.6s ease-in-out infinite}
-@keyframes radiwave{0%,100%{opacity:.45} 50%{opacity:1}}
-.radi.scanning .waves{animation-duration:.85s}
-.radi.happy .mouth{stroke-width:6}
+.radi .sweep-rot{transform-origin:120px 120px; animation:radarspin 3.6s linear infinite}
+@keyframes radarspin{to{transform:rotate(360deg)}}
+.radi .blip{animation:blippulse 1.8s ease-in-out infinite}
+@keyframes blippulse{0%,100%{opacity:.4} 50%{opacity:1}}
+.radi.scanning .sweep-rot{animation-duration:1.05s}
 
 /* ===== 통계 카드 ===== */
 .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px}
@@ -385,7 +378,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
   .view{padding:16px 13px 30px}
   .stats{grid-template-columns:repeat(2,1fr); gap:10px}
   .stat{padding:14px 14px 12px} .stat .num{font-size:23px}
-  .radi{width:80px; height:92px}
+  .radi{width:86px; height:86px}
   .speech h2{font-size:18px} .speech p{font-size:12.5px}
   .hero-card{padding:20px}
   .card{padding:13px 14px; gap:11px} .card .title{font-size:13.5px}
@@ -416,7 +409,7 @@ body.bg-paused *{animation-play-state:paused!important}
 /* 수집 진행 결정형 표시 */
 .btn .lbl[data-progress]{font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion: reduce){
-  .radar .sweep,.radar .blip,.radi .beacon,.radi .eyes{animation:none!important}
+  .radar .sweep,.radar .blip,.radi .sweep-rot,.radi .blip{animation:none!important}
   .radi .electron{display:none}
   .view,.card,.modal .sheet,.toast{animation:none!important}
 }
@@ -427,7 +420,7 @@ body.bg-paused *{animation-play-state:paused!important}
   <!-- 좌측 레일 -->
   <aside class="rail">
     <div class="brand">
-      <svg width="36" height="36" viewBox="0 0 240 240" fill="none" aria-label="라디"><defs><radialGradient id="rgb" cx="38%" cy="30%" r="78%"><stop offset="0%" stop-color="#e58a60"/><stop offset="55%" stop-color="#cf6a43"/><stop offset="100%" stop-color="#ab4e2d"/></radialGradient><radialGradient id="rgbd" cx="40%" cy="35%" r="85%"><stop offset="0%" stop-color="#ecc77e"/><stop offset="100%" stop-color="#bd8a3b"/></radialGradient></defs><line x1="122" y1="78" x2="140" y2="46" stroke="#9a4a2b" stroke-width="7" stroke-linecap="round"/><circle cx="145" cy="42" r="14" fill="url(#rgbd)"/><path d="M120 74 C170 74 198 106 198 148 C198 190 167 206 120 206 C73 206 42 190 42 148 C42 106 70 74 120 74 Z" fill="url(#rgb)"/><ellipse cx="101" cy="142" rx="9" ry="12" fill="#3a261d"/><ellipse cx="141" cy="142" rx="9" ry="12" fill="#3a261d"/><circle cx="104" cy="138" r="3" fill="#fff"/><circle cx="144" cy="138" r="3" fill="#fff"/><path d="M104 164 q17 15 34 0" fill="none" stroke="#3a261d" stroke-width="6" stroke-linecap="round"/></svg>
+      <svg width="36" height="36" viewBox="0 0 240 240" aria-label="RadiRadar"><defs><linearGradient id="lgT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6764f"/><stop offset="1" stop-color="#ab4e2d"/></linearGradient><radialGradient id="lgS" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#f6d99e" stop-opacity="0"/><stop offset="1" stop-color="#f6d99e" stop-opacity=".5"/></radialGradient></defs><rect x="16" y="16" width="208" height="208" rx="52" fill="url(#lgT)"/><g fill="none" stroke="#fbf3e6" stroke-linecap="round"><circle cx="120" cy="120" r="70" stroke-opacity=".22" stroke-width="5"/><circle cx="120" cy="120" r="44" stroke-opacity=".4" stroke-width="5"/></g><path d="M120 120 L120 46 A74 74 0 0 1 184 84 Z" fill="url(#lgS)"/><line x1="120" y1="120" x2="184" y2="84" stroke="#fdf6ea" stroke-width="6" stroke-linecap="round"/><circle cx="120" cy="120" r="8" fill="#fdf6ea"/><circle cx="156" cy="78" r="10" fill="#f3c970"/></svg>
       <div class="wm"><span class="kr">방사선 레이더</span><span class="en">RADIRADAR</span></div>
     </div>
     <nav class="nav" id="nav">
@@ -463,30 +456,22 @@ body.bg-paused *{animation-play-state:paused!important}
       <div class="hero">
         <div class="hero-card">
           <div class="hero-greet">
-            <!-- 마스코트 라디 (클레이 레이더) -->
-            <svg class="radi" id="radi" viewBox="0 0 240 240">
-              <defs>
-                <radialGradient id="rg" cx="38%" cy="30%" r="78%">
-                  <stop offset="0%" stop-color="#e58a60"/><stop offset="55%" stop-color="#cf6a43"/><stop offset="100%" stop-color="#ab4e2d"/>
-                </radialGradient>
-                <radialGradient id="rgd" cx="38%" cy="32%" r="85%"><stop offset="0%" stop-color="#ecc77e"/><stop offset="100%" stop-color="#bd8a3b"/></radialGradient>
-              </defs>
-              <ellipse cx="120" cy="212" rx="60" ry="12" fill="#8f4527" opacity=".16"/>
-              <g class="waves" fill="none" stroke="#cf6a43" stroke-linecap="round" stroke-width="5">
-                <path d="M158 40 a26 26 0 0 1 18 22" opacity=".55"/><path d="M165 28 a44 44 0 0 1 30 38" opacity=".3"/>
+            <!-- 라디 레이더 심볼 (회전 스윕) -->
+            <svg class="radi" id="radi" viewBox="0 0 240 240" role="img" aria-label="라디 레이더">
+              <defs><radialGradient id="hgS" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#be8a3c" stop-opacity="0"/><stop offset="1" stop-color="#be8a3c" stop-opacity=".34"/></radialGradient></defs>
+              <line x1="44" y1="120" x2="196" y2="120" stroke="#c96442" stroke-opacity=".12" stroke-width="2"/>
+              <line x1="120" y1="44" x2="120" y2="196" stroke="#c96442" stroke-opacity=".12" stroke-width="2"/>
+              <g fill="none" stroke="#c96442" stroke-linecap="round">
+                <circle cx="120" cy="120" r="76" stroke-opacity=".26" stroke-width="3"/>
+                <circle cx="120" cy="120" r="52" stroke-opacity=".4" stroke-width="3"/>
+                <circle cx="120" cy="120" r="28" stroke-opacity=".55" stroke-width="3"/>
               </g>
-              <line class="ant" x1="122" y1="72" x2="140" y2="42"/>
-              <circle cx="145" cy="38" r="13" fill="url(#rgd)"/><circle cx="141" cy="34" r="3.6" fill="#fff" opacity=".65"/>
-              <path class="body" d="M120 70 C170 70 198 104 198 147 C198 189 167 208 120 208 C73 208 42 189 42 147 C42 104 70 70 120 70 Z"/>
-              <ellipse cx="89" cy="106" rx="33" ry="21" fill="#fff" opacity=".17"/>
-              <g fill="none" stroke="#fff" opacity=".13" stroke-width="3"><circle cx="120" cy="152" r="42"/><circle cx="120" cy="152" r="26"/></g>
-              <g class="eyes">
-                <ellipse class="eye" cx="101" cy="141" rx="8.5" ry="11"/><ellipse class="eye" cx="141" cy="141" rx="8.5" ry="11"/>
-                <circle class="shine" cx="104" cy="137" r="2.8"/><circle class="shine" cx="144" cy="137" r="2.8"/>
+              <g class="sweep-rot">
+                <path d="M120 120 L120 44 A76 76 0 0 1 174 66 Z" fill="url(#hgS)"/>
+                <line x1="120" y1="120" x2="174" y2="66" stroke="#c96442" stroke-width="3.5" stroke-linecap="round"/>
               </g>
-              <ellipse class="cheek" cx="83" cy="159" rx="8" ry="8"/><ellipse class="cheek" cx="159" cy="159" rx="8" ry="8"/>
-              <path class="mouth" id="mouth" d="M104 163 q17 15 34 0"/>
-              <ellipse cx="99" cy="207" rx="14" ry="8.5" fill="#a64a2a"/><ellipse cx="141" cy="207" rx="14" ry="8.5" fill="#a64a2a"/>
+              <circle class="blip" cx="158" cy="76" r="6" fill="#be8a3c"/>
+              <circle cx="120" cy="120" r="6" fill="#c96442"/>
             </svg>
             <div class="speech">
               <div class="hi">// RADI ONLINE</div>
@@ -746,9 +731,7 @@ function toast(msg,kind=""){const wrap=$('#toasts');
   setTimeout(()=>{t.style.opacity=0;t.style.transition='.3s';setTimeout(()=>t.remove(),300)},dur);}
 function esc(s){return (s==null?"":String(s)).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));}
 function countUp(el,to){const from=+(el.dataset.cur||0);if(from===to){el.firstChild&&(el.childNodes[0].nodeValue=to);return;}const t0=performance.now(),d=700;function f(t){const k=Math.min(1,(t-t0)/d);const v=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));el.childNodes[0].nodeValue=v.toLocaleString();if(k<1)requestAnimationFrame(f);else el.dataset.cur=to;}requestAnimationFrame(f);}
-function setRadi(state){const r=$('#radi');r.className='radi '+(state||'');
-  const m={scanning:'M104 163 q17 7 34 0',happy:'M104 160 q17 22 34 0',error:'M104 170 q17 -13 34 0'}[state]||'M104 163 q17 15 34 0';
-  $('#mouth').setAttribute('d',m);}
+function setRadi(state){const r=$('#radi'); if(r) r.className='radi '+(state||'');}
 let _busy=false;
 window.onCollectProgress=function(done,total){
   const pct=total?Math.round(done/total*100):0;
