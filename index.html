@@ -616,6 +616,15 @@ body.bg-paused *{animation-play-state:paused!important}
             <button class="btn" id="notify-test">🔔 알림 테스트</button>
           </div>
         </div>
+        <div class="panel" id="panel-platform">
+          <h4>방사선과학기술 플랫폼 연동</h4>
+          <p class="desc">선별한 공고를 협회 <b>방사선과학기술 플랫폼</b>(Supabase)에 올려, 회원사가 플랫폼에서도 "사업기회"로 확인·알림받게 합니다.</p>
+          <div id="platform-status" class="key-status">상태 확인 중…</div>
+          <div class="kw-add" style="margin-top:10px">
+            <button class="btn primary" id="btn-sync"><span class="spin"></span><span class="lbl">플랫폼에 동기화</span></button>
+          </div>
+          <p class="desc" style="margin-top:8px">※ 연결하려면 <code>.env</code>에 <b>RADAR_PLATFORM_SUPABASE_URL</b> / <b>RADAR_PLATFORM_SUPABASE_KEY</b>(플랫폼 운영자 발급)를 넣으세요. 테이블은 <code>docs/연동_supabase_radar_notices.sql</code>로 생성.</p>
+        </div>
       </div>
     </section>
   </main>
@@ -668,6 +677,8 @@ const MOCK = {
   register_auto:(m)=>{localStorage.setItem('_mockauto','1');return {ok:true,data:{enabled:true,minutes:m}};},
   unregister_auto:()=>{localStorage.removeItem('_mockauto');return {ok:true,data:{enabled:false}};},
   notify_test:()=>({ok:true,data:{sent:true}}),
+  platform_status:()=>({ok:true,data:{configured:false}}),
+  sync_to_platform:()=>({ok:false,error:'미리보기에서는 동기화 불가(.env 연결정보 필요)',error_type:'config'}),
   set_state:(id,st)=>{_setOv(id,{state:st});return{ok:true};},
   set_note:(id,note)=>{_setOv(id,{note:(note||'').trim()||null});return{ok:true};},
   set_track:(id,st)=>{_setOv(id,{track_status:st||null});return{ok:true};},
@@ -1116,6 +1127,7 @@ async function boot(first){
     const st=await api('get_settings'); if(st&&st.ok){S.settings=st.data; renderSettings();}
     reloadKeyStatus();   // 연동 키 상태
     reloadAutoStatus();  // 자동수집 상태
+    reloadPlatformStatus();  // 플랫폼 연동 상태
     loadTracked();   // 보관함 배지·데이터
     $('#foot-time').textContent=new Date().toLocaleString('ko-KR',{hour12:false}).slice(5);
     if(first) toast('레이더 가동 — 라디가 준비됐어요 🛰️');
@@ -1226,6 +1238,18 @@ $('#auto-on')&&($('#auto-on').onclick=async()=>{
 });
 $('#auto-off')&&($('#auto-off').onclick=async()=>{const r=await api('unregister_auto'); if(r&&r.ok){toast('자동수집 꺼짐');reloadAutoStatus();} else toast('해제 실패','err');});
 $('#notify-test')&&($('#notify-test').onclick=async()=>{const r=await api('notify_test'); toast((r&&r.ok&&r.data&&r.data.sent)?'🔔 알림을 보냈어요 — 우측하단을 확인하세요':'알림 실패(Windows 알림 허용 확인)', (r&&r.ok)?'':'err');});
+async function reloadPlatformStatus(){
+  const el=$('#platform-status'); if(!el)return;
+  const r=await api('platform_status');
+  if(r&&r.ok&&r.data&&r.data.configured){el.innerHTML='✅ 플랫폼 연결됨 — 동기화 가능';el.className='key-status ok';}
+  else{el.innerHTML='⚠️ 미연결 — .env에 RADAR_PLATFORM_SUPABASE_URL/KEY 필요';el.className='key-status none';}
+}
+$('#btn-sync')&&($('#btn-sync').onclick=async()=>{
+  const b=$('#btn-sync');b.classList.add('loading');b.disabled=true;
+  const r=await api('sync_to_platform');b.classList.remove('loading');b.disabled=false;
+  if(r&&r.ok&&r.data){toast('플랫폼 동기화 완료 — '+r.data.pushed+'건(진행중 '+r.data.open+')');}
+  else toast('동기화 실패: '+((r&&r.error)||'연결정보 확인'),'err');
+});
 $('#kw-add-btn')&&($('#kw-add-btn').onclick=async()=>{
   const inp=$('#kw-input'), term=(inp.value||'').trim(); if(!term){inp.focus();return;}
   const r=await api('add_keyword',term,$('#kw-weight').value);
