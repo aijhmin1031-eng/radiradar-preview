@@ -12,20 +12,20 @@
       url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
 }
 :root{
-  /* ===== 디자인 토큰 — Claude 풍 웜 라이트 (테마/색 확장 지점) ===== */
-  --bg:#eceae1;        /* 페이지 바탕(웜 페이퍼) */
-  --bg2:#f4f2ec;       /* 사이드바 */
+  /* ===== 디자인 토큰 — Fresh (밝은 베이스 · 코랄+그린 · 파랑 제거) ===== */
+  --bg:#f4f6f2;        /* 페이지 바탕(프레시 라이트) */
+  --bg2:#eef1ea;       /* 사이드바 */
   --panel:#ffffff;     /* 카드 */
-  --panel2:#faf8f3;    /* 보조 패널 */
-  --raise:#f2efe7;     /* 호버·입력 */
-  --line:#e7e3d8; --line2:#d8d3c5;          /* 경계 */
-  --ink:#2a2823; --muted:#6f6a5e; --dim:#797363;  /* 글자(dim 어둡게 — AA) */
-  --radar:#c96442; --radar-d:#b0512f;       /* 강조(테라코타) */
+  --panel2:#fafbf8;    /* 보조 패널 */
+  --raise:#eef1ea;     /* 호버·입력 */
+  --line:#e6e9e1; --line2:#d6dbd0;          /* 경계 */
+  --ink:#232824; --muted:#6f766e; --dim:#868c82;  /* 글자 */
+  --radar:#c96442; --radar-d:#b0512f;       /* 강조(테라코타/코랄) */
   --beacon:#be8a3c; --beacon-d:#9c6f2a;     /* 보조(웜 골드) */
-  --danger:#c0392b; --good:#2f6b4c;         /* good AA(#fff 대비 5.4:1) */
-  --tier-mfg:#be8a3c; --tier-use:#c96442; --tier-base:#5b5594;  /* 공급제조·이용응용·기반안전(뮤트 인디고) */
-  --tier-base-soft:rgba(91,85,148,.12);
-  --sup:#356b9e; --sup-soft:rgba(53,107,158,.10); --icon-dim:#a39b8c;
+  --danger:#c0392b; --good:#2f6b4c;
+  --tier-mfg:#be8a3c; --tier-use:#c96442; --tier-base:#8a7f72;  /* 공급제조·이용응용·기반안전(웜 스톤) */
+  --tier-base-soft:rgba(138,127,114,.14);
+  --sup:#3a8770; --sup-soft:rgba(58,135,112,.12); --icon-dim:#a6aaa0;  /* 기업지원=틸그린(파랑 대체) */
   --sans:"Pretendard Variable","Pretendard","Malgun Gothic","맑은 고딕",sans-serif;
   --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Consolas,"Malgun Gothic",monospace;
   /* 간격(4/8 그리드) */
@@ -204,11 +204,11 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .t-base{color:var(--tier-base); background:var(--tier-base-soft); border:1px solid var(--tier-base)}
 .cat{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px}
 .cat-rad{color:var(--radar-d); background:rgba(201,100,66,.12); border:1px solid var(--radar-d)}
-.cat-sup{color:#356b9e; background:rgba(53,107,158,.12); border:1px solid #356b9e}
-.t-sup{color:#356b9e; background:rgba(53,107,158,.10); border:1px solid #356b9e}
-.score.sup{background:rgba(53,107,158,.10); border-color:#356b9e}
-.score.sup b{color:#356b9e}
-.card .meta .src-mss{color:#356b9e; border-color:#356b9e}
+.cat-sup{color:var(--sup); background:var(--sup-soft); border:1px solid var(--sup)}
+.t-sup{color:var(--sup); background:var(--sup-soft); border:1px solid var(--sup)}
+.score.sup{background:var(--sup-soft); border-color:var(--sup)}
+.score.sup b{color:var(--sup)}
+.card .meta .src-mss{color:var(--sup); border-color:var(--sup)}
 /* 관련도 강조(고득점) */
 .score.hi{background:rgba(201,100,66,.16); border-color:var(--radar); box-shadow:0 0 16px rgba(201,100,66,.20)}
 .score.hi b{color:var(--radar)}
