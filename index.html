@@ -12,20 +12,20 @@
       url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
 }
 :root{
-  /* ===== 디자인 토큰 — Fresh (밝은 베이스 · 코랄+그린 · 파랑 제거) ===== */
-  --bg:#f4f6f2;        /* 페이지 바탕(프레시 라이트) */
-  --bg2:#eef1ea;       /* 사이드바 */
+  /* ===== 디자인 토큰 — 공공데이터포털(data.go.kr) 스타일 정부 블루 ===== */
+  --bg:#f2f5fa;        /* 페이지 바탕(쿨 라이트) */
+  --bg2:#eaeff7;       /* 사이드바 */
   --panel:#ffffff;     /* 카드 */
-  --panel2:#fafbf8;    /* 보조 패널 */
-  --raise:#eef1ea;     /* 호버·입력 */
-  --line:#e6e9e1; --line2:#d6dbd0;          /* 경계 */
-  --ink:#232824; --muted:#6f766e; --dim:#868c82;  /* 글자 */
-  --radar:#c96442; --radar-d:#b0512f;       /* 강조(테라코타/코랄) */
-  --beacon:#be8a3c; --beacon-d:#9c6f2a;     /* 보조(웜 골드) */
-  --danger:#c0392b; --good:#2f6b4c;
-  --tier-mfg:#be8a3c; --tier-use:#c96442; --tier-base:#8a7f72;  /* 공급제조·이용응용·기반안전(웜 스톤) */
-  --tier-base-soft:rgba(138,127,114,.14);
-  --sup:#3a8770; --sup-soft:rgba(58,135,112,.12); --icon-dim:#a6aaa0;  /* 기업지원=틸그린(파랑 대체) */
+  --panel2:#f7f9fc;    /* 보조 패널 */
+  --raise:#eef2f9;     /* 호버·입력 */
+  --line:#e2e8f1; --line2:#cdd6e4;          /* 경계 */
+  --ink:#23272e; --muted:#5d6675; --dim:#8a93a3;  /* 글자 */
+  --radar:#2775c4; --radar-d:#1d5aa0;       /* 강조(정부 블루) */
+  --beacon:#1196d9; --beacon-d:#1178b0;     /* 보조(밝은 시안블루) */
+  --danger:#c0392b; --good:#2e8b57;
+  --tier-mfg:#1196d9; --tier-use:#2775c4; --tier-base:#1a3777;  /* 공급제조(시안)·이용응용(블루)·기반안전(네이비) */
+  --tier-base-soft:rgba(26,55,119,.10);
+  --sup:#2e9e6e; --sup-soft:rgba(46,158,110,.12); --icon-dim:#9aa3b2;  /* 기업지원=그린(블루와 구분) */
   --sans:"Pretendard Variable","Pretendard","Malgun Gothic","맑은 고딕",sans-serif;
   --mono:ui-monospace,"SFMono-Regular","JetBrains Mono",Consolas,"Malgun Gothic",monospace;
   /* 간격(4/8 그리드) */
@@ -37,7 +37,7 @@
   --shadow:0 1px 2px rgba(40,36,28,.04), 0 4px 14px rgba(40,36,28,.05);
   --shadow-lg:0 6px 26px rgba(40,36,28,.11);
   --shadow-xl:0 18px 50px rgba(40,36,28,.22);
-  --glow:0 4px 16px rgba(201,100,66,.30);
+  --glow:0 4px 16px rgba(39,117,196,.30);
   --t:.16s cubic-bezier(.2,.7,.2,1);
 }
 /* 데이터 숫자 표면 — 자릿수 폭 고정(countUp·점수·D-day 덜컹 방지) */
@@ -46,14 +46,15 @@
 html,body{height:100%}
 body{
   font-family:var(--sans); background:var(--bg); color:var(--ink);
-  -webkit-font-smoothing:antialiased; overflow:hidden;
-  word-break:keep-all;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility; font-feature-settings:"ss05","cv11"; letter-spacing:-.003em;
+  font-size:13px; line-height:1.62; overflow:hidden; word-break:keep-all;
 }
 body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
-    radial-gradient(900px 600px at 78% -10%, rgba(201,100,66,.07), transparent 60%),
-    radial-gradient(700px 500px at 0% 110%, rgba(255,180,84,.05), transparent 60%);
+    radial-gradient(900px 600px at 78% -10%, rgba(39,117,196,.07), transparent 60%),
+    radial-gradient(700px 500px at 0% 110%, rgba(17,150,217,.05), transparent 60%);
 }
 .app{position:relative; z-index:1; display:grid; grid-template-columns:248px 1fr; height:100vh}
 
@@ -75,7 +76,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 }
 .nav button .ic{width:18px; height:18px; opacity:.8; flex:none}
 .nav button:hover{background:var(--panel); color:var(--ink)}
-.nav button.on{background:linear-gradient(90deg,rgba(201,100,66,.16),rgba(201,100,66,.03)); color:var(--ink)}
+.nav button.on{background:linear-gradient(90deg,rgba(39,117,196,.16),rgba(39,117,196,.03)); color:var(--ink)}
 .nav button.on .ic{opacity:1; color:var(--radar)}
 .nav button.on{box-shadow:inset 2px 0 0 var(--radar)}
 .nav .badge{margin-left:auto; font-family:var(--mono); font-size:10.5px; font-weight:700;
@@ -103,10 +104,10 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
   padding:9px 16px; border:1px solid var(--line2); background:var(--raise); color:var(--ink);
   transition:var(--t); display:inline-flex; align-items:center; gap:8px;
 }
-.btn:hover{border-color:var(--radar-d); color:var(--radar-d); background:rgba(201,100,66,.08)}
+.btn:hover{border-color:var(--radar-d); color:var(--radar-d); background:rgba(39,117,196,.08)}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:linear-gradient(180deg,var(--radar),var(--radar-d)); border-color:var(--radar-d); color:#fff}
-.btn.primary:hover{background:linear-gradient(180deg,var(--radar-d),#9a4528); color:#fff; box-shadow:var(--glow)}
+.btn.primary:hover{background:linear-gradient(180deg,var(--radar-d),#16487f); color:#fff; box-shadow:var(--glow)}
 .btn:disabled{opacity:.5; cursor:not-allowed; transform:none}
 .btn.loading{cursor:wait}
 .btn .spin{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:none}
@@ -137,13 +138,13 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .radar-legend span{display:inline-flex; align-items:center; gap:5px}
 .radar-legend i{width:8px; height:8px; border-radius:50%}
 .radar{position:relative; width:216px; height:216px}
-.radar .ring{position:absolute; inset:0; border:1px solid rgba(201,100,66,.28); border-radius:50%}
+.radar .ring{position:absolute; inset:0; border:1px solid rgba(39,117,196,.28); border-radius:50%}
 .radar .ring.r2{inset:28px} .radar .ring.r3{inset:60px} .radar .ring.r4{inset:92px}
-.radar .cross,.radar .cross2{position:absolute; background:rgba(201,100,66,.12)}
+.radar .cross,.radar .cross2{position:absolute; background:rgba(39,117,196,.12)}
 .radar .cross{left:50%; top:0; bottom:0; width:1px; transform:translateX(-.5px)}
 .radar .cross2{top:50%; left:0; right:0; height:1px; transform:translateY(-.5px)}
 .radar .sweep{position:absolute; inset:0; border-radius:50%;
-  background:conic-gradient(from 0deg, rgba(201,100,66,.42), rgba(201,100,66,0) 62deg);
+  background:conic-gradient(from 0deg, rgba(39,117,196,.42), rgba(39,117,196,0) 62deg);
   -webkit-mask:radial-gradient(circle, #000 99%, transparent 100%);
   animation:sweep 4.2s linear infinite}
 @keyframes sweep{to{transform:rotate(360deg)}}
@@ -186,7 +187,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .search input::placeholder{color:var(--dim)}
 .chiptog{display:flex; gap:6px}
 .chiptog button{font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line); padding:8px 12px; border-radius:9px; cursor:pointer; transition:.15s}
-.chiptog button.on{color:var(--radar-d); border-color:var(--radar-d); background:rgba(201,100,66,.10); font-weight:700}
+.chiptog button.on{color:var(--radar-d); border-color:var(--radar-d); background:rgba(39,117,196,.10); font-weight:700}
 .chiplbl{font-size:10px; font-weight:700; color:var(--dim); letter-spacing:.08em; align-self:center; white-space:nowrap}
 .fgroup{display:flex; align-items:center; gap:7px}
 .sortsel{font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:8px 10px; cursor:pointer; outline:none}
@@ -194,23 +195,23 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .sortsel.on{color:#fff; background:var(--good); border-color:var(--good)}
 .export-bar{margin-left:auto; display:flex; gap:8px}
 /* 계층별 색: 공급제조=호박, 이용응용=틸, 기반안전=보라 */
-#tier-rel button[data-v="mfg"].on{color:var(--tier-mfg); border-color:var(--beacon-d); background:rgba(255,180,84,.10)}
-#tier-rel button[data-v="use"].on{color:var(--tier-use); border-color:var(--radar-d); background:rgba(201,100,66,.10)}
+#tier-rel button[data-v="mfg"].on{color:var(--tier-mfg); border-color:var(--beacon-d); background:rgba(17,150,217,.10)}
+#tier-rel button[data-v="use"].on{color:var(--tier-use); border-color:var(--radar-d); background:rgba(39,117,196,.10)}
 #tier-rel button[data-v="base"].on{color:var(--tier-base); border-color:var(--tier-base); background:var(--tier-base-soft)}
 /* 카드 계층 태그 */
 .tier-tag{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px; letter-spacing:.01em; white-space:nowrap}
 .t-mfg{color:#946724; background:rgba(190,138,60,.12); border:1px solid var(--beacon-d)}
-.t-use{color:#a94c2b; background:rgba(201,100,66,.10); border:1px solid var(--radar-d)}
+.t-use{color:#a94c2b; background:rgba(39,117,196,.10); border:1px solid var(--radar-d)}
 .t-base{color:var(--tier-base); background:var(--tier-base-soft); border:1px solid var(--tier-base)}
 .cat{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px}
-.cat-rad{color:var(--radar-d); background:rgba(201,100,66,.12); border:1px solid var(--radar-d)}
+.cat-rad{color:var(--radar-d); background:rgba(39,117,196,.12); border:1px solid var(--radar-d)}
 .cat-sup{color:var(--sup); background:var(--sup-soft); border:1px solid var(--sup)}
 .t-sup{color:var(--sup); background:var(--sup-soft); border:1px solid var(--sup)}
 .score.sup{background:var(--sup-soft); border-color:var(--sup)}
 .score.sup b{color:var(--sup)}
 .card .meta .src-mss{color:var(--sup); border-color:var(--sup)}
 /* 관련도 강조(고득점) */
-.score.hi{background:rgba(201,100,66,.16); border-color:var(--radar); box-shadow:0 0 16px rgba(201,100,66,.20)}
+.score.hi{background:rgba(39,117,196,.16); border-color:var(--radar); box-shadow:0 0 16px rgba(39,117,196,.20)}
 .score.hi b{color:var(--radar)}
 /* 히어로 상태 신호바 */
 .signals{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; padding-top:16px; border-top:1px solid var(--line)}
@@ -226,7 +227,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 }
 .card:hover{border-color:var(--line2); box-shadow:var(--shadow-lg); transform:translateY(-2px)}
 .score{width:46px; height:46px; flex:none; border-radius:11px; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; background:rgba(201,100,66,.10); border:1px solid var(--radar-d)}
+  align-items:center; justify-content:center; background:rgba(39,117,196,.10); border:1px solid var(--radar-d)}
 .score b{font-family:var(--mono); font-size:17px; font-weight:800; color:var(--radar); line-height:1}
 .score span{font-size:8.5px; color:var(--muted); margin-top:2px; letter-spacing:.05em}
 .score.lo{background:rgba(142,166,183,.08); border-color:var(--line2)} .score.lo b{color:var(--muted)}
@@ -237,7 +238,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .card .meta .dt{font-family:var(--mono)}
 .card .meta .new{color:#23150a; background:var(--beacon); font-weight:800; padding:1px 6px; border-radius:5px; font-family:var(--sans); font-size:10px}
 .kw{display:flex; gap:5px; flex-wrap:wrap; margin-top:8px}
-.kw span{font-size:var(--fs-2xs); color:var(--radar-d); background:rgba(201,100,66,.08); border:1px solid var(--radar-d); padding:1px 7px; border-radius:20px}
+.kw span{font-size:var(--fs-2xs); color:var(--radar-d); background:rgba(39,117,196,.08); border:1px solid var(--radar-d); padding:1px 7px; border-radius:20px}
 .card .meta .src{margin-left:auto; font-size:10px; padding:1px 6px; border-radius:5px; border:1px solid var(--line2); color:var(--muted)}
 .card .meta .src-msit{color:var(--radar); border-color:var(--radar-d)}
 .card .meta .src-ntis{color:var(--beacon); border-color:var(--beacon-d)}
@@ -255,12 +256,12 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .panel h4{font-size:13.5px; font-weight:800; margin-bottom:5px}
 .panel .desc{font-size:12px; color:var(--muted); margin-bottom:14px; line-height:1.55}
 .kwbox{display:flex; gap:7px; flex-wrap:wrap; min-height:40px; padding:7px; border-radius:9px; border:1px dashed transparent; transition:background .15s, border-color .15s}
-.kwbox.drop{background:rgba(201,100,66,.07); border-color:var(--radar-d)}
+.kwbox.drop{background:rgba(39,117,196,.07); border-color:var(--radar-d)}
 .kwbox span{font-size:12px; padding:5px 11px; border-radius:8px; background:var(--raise); border:1px solid var(--line2); color:var(--ink)}
 .kwbox span[draggable]{cursor:grab}
 .kwbox span.dragging{opacity:.45}
-.kwbox span.s{color:var(--radar); border-color:var(--radar-d); background:rgba(201,100,66,.07)}
-.kwbox span.m{color:var(--beacon); border-color:var(--beacon-d); background:rgba(255,180,84,.06)}
+.kwbox span.s{color:var(--radar); border-color:var(--radar-d); background:rgba(39,117,196,.07)}
+.kwbox span.m{color:var(--beacon); border-color:var(--beacon-d); background:rgba(17,150,217,.06)}
 .kwbox span.user{border-style:dashed; padding-right:5px}
 .kwbox span.def{user-select:none; transition:opacity .15s}
 .kwbox span.off{opacity:.36; text-decoration:line-through}
@@ -271,7 +272,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .kw-add select{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px; color:var(--muted); cursor:pointer}
 .key-status{font-size:13px; padding:9px 12px; border-radius:8px; background:var(--raise); border:1px solid var(--line); color:var(--muted)}
 .key-status.ok{background:rgba(47,107,76,.10); border-color:var(--good); color:var(--ink)}
-.key-status.none{background:rgba(201,100,66,.08); border-color:var(--radar-d); color:var(--ink)}
+.key-status.none{background:rgba(39,117,196,.08); border-color:var(--radar-d); color:var(--ink)}
 
 /* ===== 상세 모달 ===== */
 .modal{position:fixed; inset:0; z-index:40; display:none; align-items:center; justify-content:center; padding:30px}
@@ -327,7 +328,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 .track-status button.on{color:#fff; background:var(--radar); border-color:var(--radar-d)}
 #track-note{width:100%; min-height:62px; resize:vertical; font-family:var(--sans); font-size:13px; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 11px; outline:none; line-height:1.55}
 #track-note:focus{border-color:var(--radar-d)}
-.card .meta .trk{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px; background:rgba(201,100,66,.12); color:var(--radar-d); border:1px solid var(--radar-d)}
+.card .meta .trk{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px; background:rgba(39,117,196,.12); color:var(--radar-d); border:1px solid var(--radar-d)}
 .card .meta .has-note{font-size:11px}
 .st-badge{font-size:10px; font-weight:800; padding:1px 7px; border-radius:5px; white-space:nowrap}
 .st-open{background:var(--good); color:#fff}
@@ -371,7 +372,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
   .nav button{flex:1; flex-direction:column; gap:3px; padding:7px 3px; font-size:10px;
         justify-content:center; border-radius:10px}
   .nav button span:not(.badge){display:inline; font-weight:600}
-  .nav button.on{box-shadow:none; background:rgba(201,100,66,.10)}
+  .nav button.on{box-shadow:none; background:rgba(39,117,196,.10)}
   .nav .badge{display:none !important}
   .topbar{padding:11px 15px} .topbar h1{font-size:15px} .topbar .sub{display:none}
   .topbar .status .kv{display:none}
@@ -401,7 +402,7 @@ body::before{ /* 대기 질감: 미세 노이즈 + 레이더 글로우 */
 /* 키보드 포커스 가시화 */
 :focus-visible{outline:2px solid var(--radar);outline-offset:2px;border-radius:6px}
 /* 클릭형 div(카드·파일·체크리스트)도 키보드 포커스 가시화 */
-.card:focus-visible,.file:focus-visible{outline:2px solid var(--radar);outline-offset:2px;box-shadow:0 0 0 4px rgba(201,100,66,.18)}
+.card:focus-visible,.file:focus-visible{outline:2px solid var(--radar);outline-offset:2px;box-shadow:0 0 0 4px rgba(39,117,196,.18)}
 .checklist li:focus-visible{outline:2px solid var(--radar);outline-offset:2px;border-radius:6px}
 .card[tabindex]{cursor:pointer}
 /* 창이 백그라운드/최소화일 때 장식 애니 정지 — idle GPU·배터리 절약 */
@@ -420,7 +421,7 @@ body.bg-paused *{animation-play-state:paused!important}
   <!-- 좌측 레일 -->
   <aside class="rail">
     <div class="brand">
-      <svg width="36" height="36" viewBox="0 0 240 240" aria-label="RadiRadar"><defs><linearGradient id="lgT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6764f"/><stop offset="1" stop-color="#ab4e2d"/></linearGradient><radialGradient id="lgS" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#f6d99e" stop-opacity="0"/><stop offset="1" stop-color="#f6d99e" stop-opacity=".5"/></radialGradient></defs><rect x="16" y="16" width="208" height="208" rx="52" fill="url(#lgT)"/><g fill="none" stroke="#fbf3e6" stroke-linecap="round"><circle cx="120" cy="120" r="70" stroke-opacity=".22" stroke-width="5"/><circle cx="120" cy="120" r="44" stroke-opacity=".4" stroke-width="5"/></g><path d="M120 120 L120 46 A74 74 0 0 1 184 84 Z" fill="url(#lgS)"/><line x1="120" y1="120" x2="184" y2="84" stroke="#fdf6ea" stroke-width="6" stroke-linecap="round"/><circle cx="120" cy="120" r="8" fill="#fdf6ea"/><circle cx="156" cy="78" r="10" fill="#f3c970"/></svg>
+      <svg width="36" height="36" viewBox="0 0 240 240" aria-label="RadiRadar"><defs><linearGradient id="lgT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fd6"/><stop offset="1" stop-color="#1a4f9c"/></linearGradient><radialGradient id="lgS" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#bfe3f5" stop-opacity="0"/><stop offset="1" stop-color="#bfe3f5" stop-opacity=".5"/></radialGradient></defs><rect x="16" y="16" width="208" height="208" rx="52" fill="url(#lgT)"/><g fill="none" stroke="#eef6fd" stroke-linecap="round"><circle cx="120" cy="120" r="70" stroke-opacity=".22" stroke-width="5"/><circle cx="120" cy="120" r="44" stroke-opacity=".4" stroke-width="5"/></g><path d="M120 120 L120 46 A74 74 0 0 1 184 84 Z" fill="url(#lgS)"/><line x1="120" y1="120" x2="184" y2="84" stroke="#f4faff" stroke-width="6" stroke-linecap="round"/><circle cx="120" cy="120" r="8" fill="#f4faff"/><circle cx="156" cy="78" r="10" fill="#4ab3e6"/></svg>
       <div class="wm"><span class="kr">방사선 레이더</span><span class="en">RADIRADAR</span></div>
     </div>
     <nav class="nav" id="nav">
@@ -458,20 +459,20 @@ body.bg-paused *{animation-play-state:paused!important}
           <div class="hero-greet">
             <!-- 라디 레이더 심볼 (회전 스윕) -->
             <svg class="radi" id="radi" viewBox="0 0 240 240" role="img" aria-label="라디 레이더">
-              <defs><radialGradient id="hgS" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#be8a3c" stop-opacity="0"/><stop offset="1" stop-color="#be8a3c" stop-opacity=".34"/></radialGradient></defs>
-              <line x1="44" y1="120" x2="196" y2="120" stroke="#c96442" stroke-opacity=".12" stroke-width="2"/>
-              <line x1="120" y1="44" x2="120" y2="196" stroke="#c96442" stroke-opacity=".12" stroke-width="2"/>
-              <g fill="none" stroke="#c96442" stroke-linecap="round">
+              <defs><radialGradient id="hgS" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#1196d9" stop-opacity="0"/><stop offset="1" stop-color="#1196d9" stop-opacity=".34"/></radialGradient></defs>
+              <line x1="44" y1="120" x2="196" y2="120" stroke="#2775c4" stroke-opacity=".12" stroke-width="2"/>
+              <line x1="120" y1="44" x2="120" y2="196" stroke="#2775c4" stroke-opacity=".12" stroke-width="2"/>
+              <g fill="none" stroke="#2775c4" stroke-linecap="round">
                 <circle cx="120" cy="120" r="76" stroke-opacity=".26" stroke-width="3"/>
                 <circle cx="120" cy="120" r="52" stroke-opacity=".4" stroke-width="3"/>
                 <circle cx="120" cy="120" r="28" stroke-opacity=".55" stroke-width="3"/>
               </g>
               <g class="sweep-rot">
                 <path d="M120 120 L120 44 A76 76 0 0 1 174 66 Z" fill="url(#hgS)"/>
-                <line x1="120" y1="120" x2="174" y2="66" stroke="#c96442" stroke-width="3.5" stroke-linecap="round"/>
+                <line x1="120" y1="120" x2="174" y2="66" stroke="#2775c4" stroke-width="3.5" stroke-linecap="round"/>
               </g>
-              <circle class="blip" cx="158" cy="76" r="6" fill="#be8a3c"/>
-              <circle cx="120" cy="120" r="6" fill="#c96442"/>
+              <circle class="blip" cx="158" cy="76" r="6" fill="#1196d9"/>
+              <circle cx="120" cy="120" r="6" fill="#2775c4"/>
             </svg>
             <div class="speech">
               <div class="hi">// RADI ONLINE</div>
